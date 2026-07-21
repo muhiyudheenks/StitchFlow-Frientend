@@ -12,7 +12,7 @@ export default function WelcomeHero() {
 
     const handleSignIn = () => {
         dispatch(setAuthIntent('signin'));
-        router.push('/signin');
+        router.push('/login');
     };
 
     const handleCreateAccount = () => {
@@ -55,7 +55,7 @@ export default function WelcomeHero() {
                         onClick={handleSignIn}
                         className="rounded-[10px] bg-accent px-[22px] py-[11px] text-sm font-bold text-white"
                     >
-                        Sign in
+                        Log in
                     </button>
                 </div>
             </nav>
@@ -97,7 +97,7 @@ export default function WelcomeHero() {
                             onClick={handleSignIn}
                             className="flex h-[54px] items-center justify-center gap-2.5 rounded-xl bg-accent px-8 text-base font-bold text-white"
                         >
-                            Sign in
+                            Log in
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="h-[18px] w-[18px]">
                                 <path d="M5 12h14M13 6l6 6-6 6" />
                             </svg>

@@ -11,6 +11,10 @@ interface AuthState {
     isAuthenticated: boolean;
     status: 'idle' | 'loading' | 'succeeded' | 'failed';
     error: string | null;
+    /** Email waiting for OTP verification (set after login/register API succeeds) */
+    pendingEmail: string | null;
+    /** Whether the pending OTP is for 'registration' or 'login' */
+    otpPurpose: 'registration' | 'login' | null;
 }
 
 const initialState: AuthState = {
@@ -18,6 +22,8 @@ const initialState: AuthState = {
     isAuthenticated: false,
     status: 'idle',
     error: null,
+    pendingEmail: null,
+    otpPurpose: null,
 };
 
 const authSlice = createSlice({
@@ -28,16 +34,27 @@ const authSlice = createSlice({
             state.status = 'loading';
             state.error = null;
         },
+        /** Called when login API returns 200 with requiresOtp — OTP has been sent */
+        otpRequired(state, action: PayloadAction<{ email: string; purpose: 'registration' | 'login' }>) {
+            state.status = 'idle';
+            state.pendingEmail = action.payload.email;
+            state.otpPurpose = action.payload.purpose;
+            state.error = null;
+        },
         signInSucceeded(state, action: PayloadAction<AuthUser>) {
             state.status = 'succeeded';
             state.user = action.payload;
             state.isAuthenticated = true;
+            state.pendingEmail = null;
+            state.otpPurpose = null;
             state.error = null;
         },
         registerSucceeded(state, action: PayloadAction<AuthUser>) {
             state.status = 'succeeded';
             state.user = action.payload;
             state.isAuthenticated = true;
+            state.pendingEmail = null;
+            state.otpPurpose = null;
             state.error = null;
         },
         authRequestFailed(state, action: PayloadAction<string>) {
@@ -49,12 +66,15 @@ const authSlice = createSlice({
             state.isAuthenticated = false;
             state.status = 'idle';
             state.error = null;
+            state.pendingEmail = null;
+            state.otpPurpose = null;
         },
     },
 });
 
 export const {
     authRequestStarted,
+    otpRequired,
     signInSucceeded,
     registerSucceeded,
     authRequestFailed,

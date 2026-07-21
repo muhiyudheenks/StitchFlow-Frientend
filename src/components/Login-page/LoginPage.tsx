@@ -6,44 +6,55 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { authRequestStarted, authRequestFailed, registerSucceeded } from '@/store/slices/authSlice';
-import { registerSchema, type RegisterFormValues } from '@/utils/authSchema';
+import { authRequestFailed, otpRequired } from '@/store/slices/authSlice';
+import { useLogin } from '@/hooks/auth-hooks';
+import { LoginPageValues, LoginSchema } from '@/utils/authSchema';
+import { saveOtpContext } from '@/services/save-local';
 
-export default function RegistrationForm() {
+export default function LoginPage() {
+    const loginMutation = useLogin();
+
     const router = useRouter();
     const dispatch = useAppDispatch();
     const { status, error } = useAppSelector((state) => state.auth);
     const loading = status === 'loading';
 
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const {
         register,
         handleSubmit,
         formState: { errors },
-    } = useForm<RegisterFormValues>({
-        resolver: zodResolver(registerSchema),
+    } = useForm<LoginPageValues>({
+        resolver: zodResolver(LoginSchema),
         mode: 'onBlur',
-        defaultValues: {
-            fullName: '',
-            email: '',
-            password: '',
-            confirmPassword: '',
-            agreeTerms: false,
-        },
+        defaultValues: { email: '', password: '', remember: false },
     });
 
-    const onSubmit = async (data: RegisterFormValues) => {
-        dispatch(authRequestStarted());
-        try {
-            // TODO: replace with real registration call
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            dispatch(registerSucceeded({ fullName: data.fullName, email: data.email }));
-            router.push('/');
-        } catch {
-            dispatch(authRequestFailed('Something went wrong. Please try again.'));
-        }
+    const onSubmit = (data: LoginPageValues) => {
+
+        loginMutation.mutate(data, {
+            onSuccess: (response, variables) => {
+                // LocalStorage
+                saveOtpContext(variables.email, "login")
+                //redux update
+                dispatch(
+                    otpRequired({
+                        email: variables.email,
+                        purpose: "login",
+                    })
+                );
+                router.push("/otp");
+            },
+            onError: (error: any) => {
+                dispatch(
+                    authRequestFailed(
+                        error.response?.data?.message ||
+                        "Something went wrong."
+                    )
+                );
+            },
+        });
     };
 
     const inputClass = (hasError?: boolean) =>
@@ -53,6 +64,7 @@ export default function RegistrationForm() {
         }`;
 
     return (
+
         <div className="flex h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-[#eef0fd] via-[#eef3fb] to-[#d7f3ec] px-4 py-2">
             <div className="flex max-h-full w-full max-w-[400px] flex-col justify-center overflow-y-auto">
                 <div className="rounded-3xl bg-white p-5 shadow-xl shadow-slate-900/5">
@@ -75,7 +87,7 @@ export default function RegistrationForm() {
                             </svg>
                             StitchFlow
                         </div>
-                        <h1 className="text-lg font-bold text-slate-900">Create Account</h1>
+                        <h1 className="text-lg font-bold text-slate-900">Sign In</h1>
                         <p className="mt-0.5 text-[11px] text-slate-500">
                             Technical Excellence in Garment Manufacturing
                         </p>
@@ -88,8 +100,8 @@ export default function RegistrationForm() {
                             </div>
                         )}
 
-                        <label className="mb-1 block text-sm font-semibold text-slate-800" htmlFor="fullName">
-                            Full Name
+                        <label className="mb-1 block text-sm font-semibold text-slate-800" htmlFor="email">
+                            Username or Email
                         </label>
                         <div className="mb-0.5 relative">
                             <svg
@@ -103,42 +115,26 @@ export default function RegistrationForm() {
                                 <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" />
                             </svg>
                             <input
-                                id="fullName"
-                                type="text"
-                                placeholder="Enter your full name"
-                                className={inputClass(!!errors.fullName)}
-                                {...register('fullName')}
-                            />
-                        </div>
-                        <p className="mb-2 min-h-[16px] text-xs text-red-500">{errors.fullName?.message}</p>
-
-                        <label className="mb-1 block text-sm font-semibold text-slate-800" htmlFor="email">
-                            Email
-                        </label>
-                        <div className="mb-0.5 relative">
-                            <svg
-                                className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={1.8}
-                            >
-                                <rect x="4" y="6" width="16" height="12" rx="2" />
-                                <path d="M4 7l8 6 8-6" />
-                            </svg>
-                            <input
                                 id="email"
-                                type="email"
-                                placeholder="you@company.com"
+                                type="text"
+                                placeholder="Enter your username"
                                 className={inputClass(!!errors.email)}
                                 {...register('email')}
                             />
                         </div>
                         <p className="mb-2 min-h-[16px] text-xs text-red-500">{errors.email?.message}</p>
 
-                        <label className="mb-1 block text-sm font-semibold text-slate-800" htmlFor="password">
-                            Password
-                        </label>
+                        <div className="mb-1 flex items-center justify-between">
+                            <label className="block text-sm font-semibold text-slate-800" htmlFor="password">
+                                Password
+                            </label>
+                            <Link href="/forgot-password"
+                                className="shrink-0 whitespace-nowrap text-xs font-semibold !text-blue-600"
+                            >
+                                Forgot Password?
+                            </Link>
+                        </div>
+
                         <div className="mb-0.5 relative">
                             <svg
                                 className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400"
@@ -153,7 +149,7 @@ export default function RegistrationForm() {
                             <input
                                 id="password"
                                 type={showPassword ? 'text' : 'password'}
-                                placeholder="Create a password"
+                                placeholder="Enter your password"
                                 className={inputClass(!!errors.password).replace('pr-4', 'pr-11')}
                                 {...register('password')}
                             />
@@ -171,79 +167,34 @@ export default function RegistrationForm() {
                         </div>
                         <p className="mb-2 min-h-[16px] text-xs text-red-500">{errors.password?.message}</p>
 
-                        <label className="mb-1 block text-sm font-semibold text-slate-800" htmlFor="confirmPassword">
-                            Confirm Password
-                        </label>
-                        <div className="mb-0.5 relative">
-                            <svg
-                                className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={1.8}
-                            >
-                                <rect x="5" y="11" width="14" height="9" rx="2" />
-                                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-                            </svg>
-                            <input
-                                id="confirmPassword"
-                                type={showConfirmPassword ? 'text' : 'password'}
-                                placeholder="Re-enter your password"
-                                className={inputClass(!!errors.confirmPassword).replace('pr-4', 'pr-11')}
-                                {...register('confirmPassword')}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowConfirmPassword((v) => !v)}
-                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                                aria-label="Toggle confirm password visibility"
-                            >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-[18px] w-[18px]">
-                                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
-                            </button>
-                        </div>
-                        <p className="mb-2 min-h-[16px] text-xs text-red-500">{errors.confirmPassword?.message}</p>
-
-                        <label className="flex items-start gap-2 text-sm text-slate-600">
+                        <label className="mb-4 flex items-center gap-2 text-sm text-slate-600">
                             <input
                                 type="checkbox"
-                                className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-blue-600"
-                                {...register('agreeTerms')}
+                                className="h-4 w-4 rounded border-slate-300 accent-blue-600"
+                                {...register('remember')}
                             />
-                            <span>
-                                I agree to the{' '}
-                                <Link href="/terms" className="font-semibold text-blue-600">
-                                    Terms &amp; Conditions
-                                </Link>{' '}
-                                and{' '}
-                                <Link href="/privacy" className="font-semibold text-blue-600">
-                                    Privacy Policy
-                                </Link>
-                            </span>
+                            Remember me
                         </label>
-                        <p className="mb-2 min-h-[16px] text-xs text-red-500">{errors.agreeTerms?.message}</p>
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="mb-3 flex h-[44px] w-full items-center justify-center rounded-xl bg-blue-600 text-base font-semibold text-white disabled:opacity-60"
+                            className="mb-4 flex h-[48px] w-full items-center justify-center rounded-xl bg-blue-600 text-base font-semibold text-white disabled:opacity-60"
                         >
-                            {loading ? 'Creating account…' : 'Create Account'}
+                            {loading ? 'Signing in…' : 'Sign In'}
                         </button>
 
-                        <div className="mb-3 flex items-center gap-3">
+                        <div className="mb-4 flex items-center gap-3">
                             <div className="h-px flex-1 bg-slate-200" />
                             <span className="text-xs font-semibold tracking-wide text-slate-400">
-                                OR SIGN UP WITH
+                                OR SIGN IN WITH
                             </span>
                             <div className="h-px flex-1 bg-slate-200" />
                         </div>
 
                         <button
                             type="button"
-                            className="flex h-[44px] w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-base font-semibold text-slate-800"
+                            className="flex h-[48px] w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-base font-semibold text-slate-800"
                         >
                             <svg viewBox="0 0 24 24" className="h-5 w-5">
                                 <path
@@ -268,16 +219,16 @@ export default function RegistrationForm() {
                     </form>
                 </div>
 
-                <p className="mt-2 text-center text-xs font-semibold text-blue-600">
+                <p className="mt-6 text-center text-sm font-semibold text-blue-600">
                     StitchFlow
                 </p>
-                <p className="mt-0.5 text-center text-[10px] text-slate-500">
+                <p className="mt-1 text-center text-xs text-slate-500">
                     © 2026 StitchFlow AI. Technical Excellence in Garment Manufacturing.
                 </p>
-                <p className="mt-1 text-center text-xs text-slate-500">
-                    Already have an account?{' '}
-                    <Link href="/SignInForm" className="font-semibold text-blue-600">
-                        Sign in
+                <p className="mt-3 text-center text-sm text-slate-500">
+                    Don&apos;t have an account?{' '}
+                    <Link href="/register" className="font-semibold text-blue-600">
+                        Create account
                     </Link>
                 </p>
             </div>

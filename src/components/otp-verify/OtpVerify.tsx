@@ -1,26 +1,45 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ClipboardEvent } from 'react';
+import {
+    useEffect,
+    useRef,
+    useState,
+    type FormEvent,
+    type KeyboardEvent,
+    type ClipboardEvent,
+} from 'react';
 import { useRouter } from 'next/navigation';
+import axios, { AxiosError } from 'axios';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { authRequestStarted, authRequestFailed } from '@/store/slices/authSlice';
+import { signInSucceeded, authRequestFailed } from '@/store/slices/authSlice';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 60;
 
+interface VerifyResponse {
+    message: string;
+    token: string;
+    user: { fullName: string; email: string; companyName?: string };
+}
+
 export default function OtpVerify() {
     const router = useRouter();
     const dispatch = useAppDispatch();
-    const { status, error } = useAppSelector((state) => state.auth);
-    const loading = status === 'loading';
+
+    // Read email and purpose that the login/register step stored in Redux
+    const { pendingEmail, otpPurpose } = useAppSelector((state) => state.auth);
 
     const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
     const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
     const [formError, setFormError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [resending, setResending] = useState(false);
+    const [isVerified, setIsVerified] = useState(false);
     const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
     const expired = secondsLeft <= 0;
 
+    // Countdown timer
     useEffect(() => {
         if (secondsLeft <= 0) return;
         const timer = setInterval(() => {
@@ -29,10 +48,21 @@ export default function OtpVerify() {
         return () => clearInterval(timer);
     }, [secondsLeft]);
 
+    // Focus first box on mount
+    useEffect(() => {
+        inputRefs.current[0]?.focus();
+    }, []);
+
+
+    // Guard: if there is no pending email (e.g. direct navigation), go back to signin
+    useEffect(() => {
+        if (!pendingEmail && !isVerified) {
+            router.replace("/login");
+        }
+    }, [pendingEmail, isVerified, router]);
+
     const formatTime = (s: number) => {
-        const m = Math.floor(s / 60)
-            .toString()
-            .padStart(2, '0');
+        const m = Math.floor(s / 60).toString().padStart(2, '0');
         const sec = (s % 60).toString().padStart(2, '0');
         return `${m}:${sec}`;
     };
@@ -43,7 +73,6 @@ export default function OtpVerify() {
         next[index] = value.slice(-1);
         setOtp(next);
         setFormError(null);
-
         if (value && index < OTP_LENGTH - 1) {
             inputRefs.current[index + 1]?.focus();
         }
@@ -67,12 +96,25 @@ export default function OtpVerify() {
         inputRefs.current[Math.min(pasted.length, OTP_LENGTH - 1)]?.focus();
     };
 
-    const handleResend = () => {
-        setOtp(Array(OTP_LENGTH).fill(''));
-        setSecondsLeft(RESEND_SECONDS);
+    const handleResend = async () => {
+        if (!pendingEmail) return;
+        setResending(true);
         setFormError(null);
-        inputRefs.current[0]?.focus();
-        // TODO: trigger real resend-OTP API call
+        try {
+            await axios.post('http://localhost:5000/api/auth/resend-otp', {
+                email: pendingEmail,
+                purpose: otpPurpose ?? 'registration',
+            });
+            setOtp(Array(OTP_LENGTH).fill(''));
+            setSecondsLeft(RESEND_SECONDS);
+            setFormError(null);
+            inputRefs.current[0]?.focus();
+        } catch (err) {
+            const axErr = err as AxiosError<{ message?: string }>;
+            setFormError(axErr.response?.data?.message ?? 'Failed to resend code. Please try again.');
+        } finally {
+            setResending(false);
+        }
     };
 
     const handleSubmit = async (e: FormEvent) => {
@@ -90,13 +132,47 @@ export default function OtpVerify() {
             return;
         }
 
-        dispatch(authRequestStarted());
+        if (!pendingEmail) {
+            setFormError('Session expired. Please sign in again.');
+            console.log("Redirecting...");
+
+            router.replace('/');
+            return;
+        }
+
+        setLoading(true);
         try {
-            // TODO: replace with real OTP verification call
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            router.push('/');
-        } catch {
-            dispatch(authRequestFailed('Invalid code. Please try again.'));
+            const { data } = await axios.post<VerifyResponse>(
+                'http://localhost:5000/api/auth/verify-otp',
+                {
+                    email: pendingEmail,
+                    code,
+                    purpose: otpPurpose ?? 'registration',
+                }
+            );
+            console.log("OTP Verified:", data);
+
+            console.log("1");
+
+            dispatch(
+                signInSucceeded({
+                    fullName: data.user.fullName,
+                    email: data.user.email,
+                    companyName: data.user.companyName,
+                })
+            );
+            console.log("2");
+            setIsVerified(true);
+            router.push('/dashboard');
+            console.log("3");
+
+        } catch (err) {
+            const axErr = err as AxiosError<{ message?: string }>;
+            const msg = axErr.response?.data?.message ?? 'Invalid code. Please try again.';
+            setFormError(msg);
+            dispatch(authRequestFailed(msg));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -126,15 +202,20 @@ export default function OtpVerify() {
                     <div className="mb-4 text-center">
                         <h1 className="text-xl font-bold text-slate-900">Verify Identity</h1>
                         <p className="mt-2 text-sm text-slate-500">
-                            We&apos;ve sent a 6-digit verification code to your registered device for
-                            manufacturing terminal access.
+                            We&apos;ve sent a 6-digit verification code to{' '}
+                            {pendingEmail ? (
+                                <span className="font-semibold text-slate-700">{pendingEmail}</span>
+                            ) : (
+                                'your email'
+                            )}
+                            .
                         </p>
                     </div>
 
                     <form onSubmit={handleSubmit}>
-                        {(formError || error) && (
+                        {formError && (
                             <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-center text-sm text-red-600">
-                                {formError || error}
+                                {formError}
                             </div>
                         )}
 
@@ -145,14 +226,16 @@ export default function OtpVerify() {
                                     ref={(el) => {
                                         inputRefs.current[index] = el;
                                     }}
+                                    id={`otp-${index}`}
                                     type="text"
                                     inputMode="numeric"
                                     maxLength={1}
                                     value={digit}
-                                    disabled={expired}
+                                    disabled={expired || loading}
                                     onChange={(e) => handleChange(index, e.target.value)}
                                     onKeyDown={(e) => handleKeyDown(index, e)}
                                     onPaste={handlePaste}
+                                    aria-label={`OTP digit ${index + 1}`}
                                     className="h-12 w-12 rounded-xl border border-slate-200 bg-white text-center text-lg font-semibold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-300"
                                 />
                             ))}
@@ -165,7 +248,13 @@ export default function OtpVerify() {
                                     : 'bg-blue-50 text-blue-600'
                                     }`}
                             >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3.5 w-3.5">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={1.8}
+                                    className="h-3.5 w-3.5"
+                                >
                                     <circle cx="12" cy="13" r="8" />
                                     <path d="M12 9v4l3 2" />
                                     <path d="M9 2h6" />
@@ -177,7 +266,7 @@ export default function OtpVerify() {
                         <button
                             type="submit"
                             disabled={loading || expired}
-                            className="mb-3 flex h-[48px] w-full items-center justify-center rounded-xl bg-blue-600 text-sm font-bold tracking-wide text-white disabled:opacity-40"
+                            className="mb-3 flex h-[48px] w-full items-center justify-center rounded-xl bg-blue-600 text-sm font-bold tracking-wide text-white transition-colors hover:bg-blue-700 disabled:opacity-40"
                         >
                             {loading ? 'VERIFYING…' : 'VERIFY OTP'}
                         </button>
@@ -185,10 +274,10 @@ export default function OtpVerify() {
                         <button
                             type="button"
                             onClick={handleResend}
-                            disabled={!expired}
-                            className="flex h-[48px] w-full items-center justify-center rounded-xl border border-blue-200 bg-white text-sm font-bold tracking-wide text-blue-600 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300"
+                            disabled={!expired || resending}
+                            className="flex h-[48px] w-full items-center justify-center rounded-xl border border-blue-200 bg-white text-sm font-bold tracking-wide text-blue-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300"
                         >
-                            RESEND OTP
+                            {resending ? 'RESENDING…' : 'RESEND OTP'}
                         </button>
 
                         <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4 text-left">
