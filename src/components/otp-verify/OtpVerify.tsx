@@ -19,9 +19,16 @@ const RESEND_SECONDS = 60;
 interface VerifyResponse {
     message: string;
     token: string;
-    user: { fullName: string; email: string; companyName?: string };
+    user: {
+        id: string;
+        fullName: string;
+        email: string;
+        role: "employee" | "admin" | "manager";
+        companyName?: string;
+        isVerified: boolean;
+        isBlock: boolean;
+    };
 }
-
 export default function OtpVerify() {
     const router = useRouter();
     const dispatch = useAppDispatch();
@@ -151,20 +158,24 @@ export default function OtpVerify() {
                 }
             );
             console.log("OTP Verified:", data);
+            console.log("OTP Verified User:", data.user);
 
-            console.log("1");
+
+            localStorage.setItem("user", JSON.stringify(data.user));
 
             dispatch(
                 signInSucceeded({
+                    id: data.user.id,
                     fullName: data.user.fullName,
                     email: data.user.email,
+                    role: data.user.role,
                     companyName: data.user.companyName,
+                    isVerified: data.user.isVerified,
+                    isBlock: data.user.isBlock,
                 })
             );
-            console.log("2");
             setIsVerified(true);
             router.push('/dashboard');
-            console.log("3");
 
         } catch (err) {
             const axErr = err as AxiosError<{ message?: string }>;

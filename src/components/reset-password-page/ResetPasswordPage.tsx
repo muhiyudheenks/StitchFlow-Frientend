@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import axios, { AxiosError } from 'axios';
 import { resetPasswordSchema, type ResetPasswordValues } from '@/utils/authSchema';
+import { useAppSelector } from '@/store/hooks';
 
 type StrengthLevel = 'weak' | 'fair' | 'good' | 'strong';
 
@@ -25,18 +26,20 @@ function getStrength(password: string): StrengthLevel {
 }
 
 const strengthConfig: Record<StrengthLevel, { label: string; color: string; width: string; barColor: string }> = {
-    weak:   { label: 'Weak',   color: 'text-red-500',    width: 'w-1/4',  barColor: 'bg-red-400' },
-    fair:   { label: 'Fair',   color: 'text-orange-500', width: 'w-2/4',  barColor: 'bg-orange-400' },
-    good:   { label: 'Good',   color: 'text-blue-500',   width: 'w-3/4',  barColor: 'bg-blue-400' },
-    strong: { label: 'Strong', color: 'text-green-500',  width: 'w-full', barColor: 'bg-green-500' },
+    weak: { label: 'Weak', color: 'text-red-500', width: 'w-1/4', barColor: 'bg-red-400' },
+    fair: { label: 'Fair', color: 'text-orange-500', width: 'w-2/4', barColor: 'bg-orange-400' },
+    good: { label: 'Good', color: 'text-blue-500', width: 'w-3/4', barColor: 'bg-blue-400' },
+    strong: { label: 'Strong', color: 'text-green-500', width: 'w-full', barColor: 'bg-green-500' },
 };
 
 export default function ResetPasswordPage() {
     const router = useRouter();
-
+    const reduxEmail = useAppSelector((state) => state.auth.resetEmail);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordValue, setPasswordValue] = useState('');
+    const [email, setEmail] = useState<string>('');
+    const [successMsg, setSuccessMsg] = useState<string>('');
 
     const strength = getStrength(passwordValue);
     const cfg = strengthConfig[strength];
@@ -50,33 +53,51 @@ export default function ResetPasswordPage() {
     } = useForm<ResetPasswordValues>({
         resolver: zodResolver(resetPasswordSchema),
         mode: 'onBlur',
-        defaultValues: { password: '', confirmPassword: '' },
+        defaultValues: { newpassword: '', confirmPassword: '' },
     });
 
+    useEffect(() => {
+        const storedEmail = reduxEmail || localStorage.getItem('resetEmail');
+
+        if (storedEmail) {
+            setEmail(storedEmail);
+        } else {
+            router.push('/forgot-password');
+        }
+    }, [reduxEmail, router]);
     const mutation = useMutation<
-        unknown,
+        { message?: string },
         AxiosError<{ message?: string }>,
         ResetPasswordValues
     >({
         mutationFn: async (data) => {
             const response = await axios.post(
                 'http://localhost:5000/api/auth/reset-password',
-                { password: data.password }
+
+                {
+                    email,
+                    newpassword: data.newpassword,
+                }
             );
             return response.data;
         },
-        onSuccess: () => {
-            router.push('/password-updated');
+        onSuccess: (data: { message?: string }) => {
+            localStorage.removeItem('resetEmail');
+
+            setSuccessMsg(data?.message || 'Password reset successfully! Redirecting to login...');
+
+            setTimeout(() => {
+                router.push('/login');
+            }, 2000);
         },
     });
 
     const onSubmit = (data: ResetPasswordValues) => mutation.mutate(data);
 
     const inputClass = (hasError?: boolean) =>
-        `w-full rounded-xl border bg-white py-2.5 pl-11 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-2 transition-colors ${
-            hasError
-                ? 'border-red-300 focus:border-red-400 focus:ring-red-100'
-                : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
+        `w-full rounded-xl border bg-white py-2.5 pl-11 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-2 transition-colors ${hasError
+            ? 'border-red-300 focus:border-red-400 focus:ring-red-100'
+            : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
         }`;
 
     const EyeIcon = ({ show }: { show: boolean }) =>
@@ -163,8 +184,8 @@ export default function ResetPasswordPage() {
                                 id="rp-password"
                                 type={showPassword ? 'text' : 'password'}
                                 placeholder="Create a strong password"
-                                className={inputClass(!!errors.password)}
-                                {...register('password', {
+                                className={inputClass(!!errors.newpassword)}
+                                {...register('newpassword', {
                                     onChange: (e) => setPasswordValue(e.target.value),
                                 })}
                             />
@@ -177,7 +198,7 @@ export default function ResetPasswordPage() {
                                 <EyeIcon show={showPassword} />
                             </button>
                         </div>
-                        <p className="mb-2 min-h-[16px] text-xs text-red-500">{errors.password?.message}</p>
+                        <p className="mb-2 min-h-[16px] text-xs text-red-500">{errors.newpassword?.message}</p>
 
                         {/* Strength meter */}
                         {passwordValue.length > 0 && (

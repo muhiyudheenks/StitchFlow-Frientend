@@ -1,9 +1,13 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export interface AuthUser {
+    id: string;
     fullName: string;
     email: string;
+    role: "employee" | "admin" | "manager";
     companyName?: string;
+    isVerified: boolean;
+    isBlock: boolean;
 }
 
 interface AuthState {
@@ -15,6 +19,8 @@ interface AuthState {
     pendingEmail: string | null;
     /** Whether the pending OTP is for 'registration' or 'login' */
     otpPurpose: 'registration' | 'login' | null;
+    resetEmail: string | null;
+
 }
 
 const initialState: AuthState = {
@@ -24,6 +30,7 @@ const initialState: AuthState = {
     error: null,
     pendingEmail: null,
     otpPurpose: null,
+    resetEmail: null,
 };
 
 const authSlice = createSlice({
@@ -68,6 +75,14 @@ const authSlice = createSlice({
             state.error = null;
             state.pendingEmail = null;
             state.otpPurpose = null;
+            state.resetEmail = null;
+
+        },
+        setResetEmail(
+            state,
+            action: PayloadAction<string>
+        ) {
+            state.resetEmail = action.payload;
         },
     },
 });
@@ -79,6 +94,8 @@ export const {
     registerSucceeded,
     authRequestFailed,
     signedOut,
+    setResetEmail,
+
 } = authSlice.actions;
 
 export default authSlice.reducer;

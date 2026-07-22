@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import { makeStore } from '@/store/store';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AuthInitializer from './AuthInitializer';
 
 export default function Providers({ children }: { children: ReactNode }) {
     const [store] = useState(() => makeStore());
@@ -20,6 +21,7 @@ export default function Providers({ children }: { children: ReactNode }) {
     return (
         <Provider store={store}>
             <QueryClientProvider client={queryClient}>
+                <AuthInitializer />
                 {children}
             </QueryClientProvider>
         </Provider>

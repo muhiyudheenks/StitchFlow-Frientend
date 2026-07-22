@@ -7,9 +7,12 @@ import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import axios, { AxiosError } from 'axios';
 import { forgotPasswordSchema, type ForgotPasswordValues } from '@/utils/authSchema';
+import { useAppDispatch } from '@/store/hooks';
+import { setResetEmail } from '@/store/slices/authSlice';
 
 export default function ForgotPasswordPage() {
     const router = useRouter();
+    const dispatch = useAppDispatch()
 
     const {
         register,
@@ -33,7 +36,9 @@ export default function ForgotPasswordPage() {
             );
             return response.data;
         },
-        onSuccess: () => {
+        onSuccess: (data, variables) => {
+            dispatch(setResetEmail(variables.email));
+            localStorage.setItem('resetEmail', variables.email);
             router.push('/reset-password');
         },
     });
@@ -41,10 +46,9 @@ export default function ForgotPasswordPage() {
     const onSubmit = (data: ForgotPasswordValues) => mutation.mutate(data);
 
     const inputClass = (hasError?: boolean) =>
-        `w-full rounded-xl border bg-white py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-2 transition-colors ${
-            hasError
-                ? 'border-red-300 focus:border-red-400 focus:ring-red-100'
-                : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
+        `w-full rounded-xl border bg-white py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-2 transition-colors ${hasError
+            ? 'border-red-300 focus:border-red-400 focus:ring-red-100'
+            : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
         }`;
 
     return (

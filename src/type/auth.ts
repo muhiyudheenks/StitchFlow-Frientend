@@ -30,10 +30,12 @@ export interface VerifyOtpRequest {
 
 export interface VerifyOtpResponse {
     message: string;
+    token: string;
     user: {
         id: string;
         fullName: string;
         email: string;
+        role: "employee" | "admin" | "manager";
         companyName?: string;
         isVerified: boolean;
         isBlock: boolean;
