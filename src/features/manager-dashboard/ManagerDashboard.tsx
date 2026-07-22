@@ -1,4 +1,4 @@
-// "use client";
+"use client";
 
 // import {
 //   LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
@@ -301,3 +301,14 @@
 //     </DashboardShell>
 // );
 // }
+import React from 'react'
+
+function ManagerDashboard() {
+    return (
+        <div>
+            ManagerDashboard
+        </div>
+    )
+}
+
+export default ManagerDashboard
