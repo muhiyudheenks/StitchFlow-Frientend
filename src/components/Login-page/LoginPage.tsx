@@ -10,6 +10,8 @@ import { authRequestFailed, otpRequired } from '@/store/slices/authSlice';
 import { useLogin } from '@/hooks/auth-hooks';
 import { LoginPageValues, LoginSchema } from '@/utils/authSchema';
 import { saveOtpContext } from '@/services/save-local';
+import { AxiosError } from 'axios';
+import { ApiError } from '@/type/api';
 
 export default function LoginPage() {
     const loginMutation = useLogin();
@@ -46,7 +48,7 @@ export default function LoginPage() {
                 );
                 router.push("/otp");
             },
-            onError: (error: any) => {
+            onError: (error: AxiosError<ApiError>) => {
                 dispatch(
                     authRequestFailed(
                         error.response?.data?.message ||

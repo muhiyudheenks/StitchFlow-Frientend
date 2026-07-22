@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import axios, { AxiosError } from 'axios';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { signInSucceeded, authRequestFailed } from '@/store/slices/authSlice';
+import api from '@/services/axois';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 60;
@@ -61,7 +62,7 @@ export default function OtpVerify() {
     }, []);
 
 
-    // Guard: if there is no pending email (e.g. direct navigation), go back to signin
+    //no pending email & no varified go back to signin
     useEffect(() => {
         if (!pendingEmail && !isVerified) {
             router.replace("/login");
@@ -108,7 +109,7 @@ export default function OtpVerify() {
         setResending(true);
         setFormError(null);
         try {
-            await axios.post('http://localhost:5000/api/auth/resend-otp', {
+            await api.post('/api/auth/resend-otp', {
                 email: pendingEmail,
                 purpose: otpPurpose ?? 'registration',
             });

@@ -16,15 +16,6 @@ export const useRegister = () => {
     });
 };
 
-// export const useRegister = () => {
-//     return useMutation({
-//         mutationFn: async (data: RegisterRequest) => {
-//             console.log("INSIDE MUTATION");
-//             return register(data);
-//         },
-//     });
-// };
-
 export const useVerifyOtp = () => {
     return useMutation({
         mutationFn: verifyOtp,
