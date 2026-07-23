@@ -1,4 +1,4 @@
-import ManagerDashboard from "@/features/manager-dashboard";
+import { ManagerDashboard } from "@/features/manager";
 
 export default function ManagerPage() {
     return <ManagerDashboard />;

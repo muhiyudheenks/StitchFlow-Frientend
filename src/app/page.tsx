@@ -1,1 +1,1 @@
-export { default } from '@/components/WelcomeHero/WelcomeHero';
+export { default } from '@/features/landing';

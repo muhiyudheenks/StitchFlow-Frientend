@@ -1,5 +1,4 @@
 "use client";
-import AdminDashboard from "@/features/admin-dashboard";
 import { useAppSelector } from "@/store/hooks";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";

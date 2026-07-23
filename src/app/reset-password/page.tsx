@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import ResetPasswordPage from '@/components/reset-password-page';
+import { ResetPasswordPage } from '@/features/auth';
 
 export const metadata: Metadata = {
     title: 'Reset Password — StitchFlow',

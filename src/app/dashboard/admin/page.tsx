@@ -1,5 +1,5 @@
-import AdminDashboard from "@/features/admin-dashboard";
+import { AdminDashboard } from "@/features/admin";
 
 export default function AdminPage() {
-    return <AdminDashboard />;
+    return <AdminDashboard initialTab="dashboard" />;
 }

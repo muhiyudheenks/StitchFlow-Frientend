@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import RegisterPage from '@/components/register-page';
+import { RegisterPage } from '@/features/auth';
 
 export const metadata: Metadata = {
     title: 'Create account — StitchFlow',

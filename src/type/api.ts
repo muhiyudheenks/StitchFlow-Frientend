@@ -1,3 +1,1 @@
-export interface ApiError {
-    message: string;
-}
+export * from '@/shared/types/api';

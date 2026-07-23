@@ -5,6 +5,37 @@
   --color-accentLight: #93c5fd;
   --color-panel: #08131f;
   --color-skyText: #7dd3fc;
+
+  --color-primary: #7c3aed;
+  --color-secondary: #4f46e5;
+  --color-bg-dark: #030712;
+  --color-card-dark: #111827;
+  --color-bg-light: #fafafc;
+  --color-charcoal: #111827;
+
+  /* Premium Animations */
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-slow: float 8s ease-in-out infinite;
+  --animate-float-fast: float 4s ease-in-out infinite;
+  --animate-marquee: marquee 30s linear infinite;
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-15px) rotate(1deg);
+    }
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 html,
