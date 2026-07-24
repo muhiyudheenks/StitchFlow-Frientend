@@ -85,3 +85,11 @@ export interface RecentActivity {
     time: string;
     type: 'production' | 'attendance' | 'inventory' | 'employee' | 'system';
 }
+
+export interface Employee {
+    id: string;
+    fullName: string;
+    email: string;
+    department: string;
+    role: string;
+}

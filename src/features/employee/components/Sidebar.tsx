@@ -2,17 +2,17 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { navItems } from '../constants';
-import { AdminTab } from '../types';
-import { FiLayers, FiChevronLeft, FiChevronRight, FiLogOut } from 'react-icons/fi';
+import { employeeNavItems } from '../constants';
+import { EmployeeTab } from '../types';
+import { FiLayers, FiChevronLeft, FiChevronRight, FiLogOut, FiUserCheck } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 
 import { useState } from 'react';
 import LogoutModal from '@/shared/components/LogoutModal';
 
 interface SidebarProps {
-    activeTab: AdminTab;
-    setActiveTab: (tab: AdminTab) => void;
+    activeTab: EmployeeTab;
+    setActiveTab: (tab: EmployeeTab) => void;
     collapsed: boolean;
     setCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -21,7 +21,7 @@ export default function Sidebar({
     activeTab,
     setActiveTab,
     collapsed,
-    setCollapsed
+    setCollapsed,
 }: SidebarProps) {
     const router = useRouter();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -35,13 +35,16 @@ export default function Sidebar({
             className={`relative flex flex-col justify-between bg-[#0F1424] text-slate-300 border-r border-slate-800/80 transition-all duration-300 z-30 font-sans ${collapsed ? 'w-20' : 'w-64'
                 }`}
         >
-            {/* Ambient subtle glow */}
+            {/* Ambient background glow */}
             <div className="absolute top-0 left-0 w-full h-48 bg-purple-600/10 blur-3xl pointer-events-none" />
 
             <div>
                 {/* Header Branding */}
                 <div className="flex items-center justify-between p-5 border-b border-slate-800/80">
-                    <div className="flex items-center gap-3 overflow-hidden cursor-pointer" onClick={() => setActiveTab('dashboard')}>
+                    <div
+                        className="flex items-center gap-3 overflow-hidden cursor-pointer"
+                        onClick={() => setActiveTab('dashboard')}
+                    >
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white shadow-lg shadow-purple-500/20">
                             <FiLayers size={20} />
                         </div>
@@ -55,8 +58,8 @@ export default function Sidebar({
                                 <span className="text-lg font-extrabold text-white tracking-tight leading-none">
                                     StitchFlow
                                 </span>
-                                <span className="text-[10px] font-mono text-purple-400 font-bold uppercase tracking-wider mt-1">
-                                    Admin OS
+                                <span className="text-[10px] font-mono text-purple-400 font-bold uppercase tracking-wider mt-1 flex items-center gap-1">
+                                    <FiUserCheck size={10} /> Employee OS
                                 </span>
                             </motion.div>
                         )}
@@ -74,7 +77,7 @@ export default function Sidebar({
 
                 {/* Navigation Items */}
                 <nav className="p-3 space-y-1 mt-2">
-                    {navItems.map((item) => {
+                    {employeeNavItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = activeTab === item.id;
                         return (
@@ -110,10 +113,9 @@ export default function Sidebar({
                                     </span>
                                 )}
 
-                                {/* Active Pill Indicator on edge */}
                                 {isActive && (
                                     <motion.div
-                                        layoutId="sidebarActiveIndicator"
+                                        layoutId="employeeSidebarActiveIndicator"
                                         className="absolute left-0 top-2 bottom-2 w-1 bg-purple-500 rounded-r-full"
                                     />
                                 )}
@@ -135,8 +137,8 @@ export default function Sidebar({
                                 <span className="text-xs font-bold text-slate-100 truncate">
                                     Alex Vance
                                 </span>
-                                <span className="text-[10px] text-slate-400 truncate">
-                                    Super Admin
+                                <span className="text-[10px] text-purple-400 truncate font-semibold">
+                                    Line Operator
                                 </span>
                             </div>
                         </div>
