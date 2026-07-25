@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import {
     FiCheckSquare,
     FiPlus,
@@ -27,20 +27,14 @@ export default function TasksTab() {
     const { data: tasks = [], isLoading } = useQuery<ManagerTask[]>({
         queryKey: ['manager-tasks'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/manager/tasks', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/manager/tasks');
             return response.data?.data || [];
         },
     });
 
     const createTaskMutation = useMutation({
         mutationFn: async (newTaskData: any) => {
-            const response = await axios.post(
-                'http://localhost:5000/api/manager/tasks',
-                newTaskData,
-                { withCredentials: true }
-            );
+            const response = await api.post('/api/manager/tasks', newTaskData);
             return response.data;
         },
         onSuccess: () => {
@@ -55,11 +49,7 @@ export default function TasksTab() {
 
     const updateStatusMutation = useMutation({
         mutationFn: async ({ taskId, status }: { taskId: string; status: string }) => {
-            const response = await axios.put(
-                `http://localhost:5000/api/manager/tasks/${taskId}`,
-                { status },
-                { withCredentials: true }
-            );
+            const response = await api.put(`/api/manager/tasks/${taskId}`, { status });
             return response.data;
         },
         onSuccess: () => {

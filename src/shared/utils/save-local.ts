@@ -1,6 +1,6 @@
 export const saveOtpContext = (
     email: string,
-    purpose: "login" | "register" | "forgot-password"
+    purpose: "login" | "forgot-password"
 ) => {
     localStorage.setItem("pendingEmail", email);
     localStorage.setItem("otpPurpose", purpose);

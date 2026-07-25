@@ -9,19 +9,7 @@ export interface LoginResponse {
     email: string;
 }
 
-export interface RegisterRequest {
-    fullName: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-    agreeTerms: boolean;
-}
 
-export interface RegisterResponse {
-    message: string;
-    email: string;
-    smtpResponse?: unknown;
-}
 
 export interface VerifyOtpRequest {
     email: string;

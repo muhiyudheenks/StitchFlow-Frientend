@@ -148,14 +148,13 @@ export default function OtpVerify() {
 
         setLoading(true);
         try {
-            const { data } = await axios.post<VerifyResponse>(
-                'http://localhost:5000/api/auth/verify-otp',
+            const { data } = await api.post<VerifyResponse>(
+                '/api/auth/verify-otp',
                 {
                     email: pendingEmail,
                     code,
-                    purpose: otpPurpose ?? 'registration',
-                },
-                { withCredentials: true }
+                    purpose: otpPurpose ?? 'login',
+                }
             );
 
             if (data.token) {

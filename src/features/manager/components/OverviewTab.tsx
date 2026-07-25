@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import { ManagerTab } from '../types';
 import {
     FiCpu,
@@ -25,9 +25,7 @@ export default function OverviewTab({ onNavigateTab, onOpenQuickAction }: Overvi
     const { data: overviewData, isLoading } = useQuery({
         queryKey: ['manager-overview'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/manager/overview', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/manager/overview');
             return response.data?.data || {};
         },
     });

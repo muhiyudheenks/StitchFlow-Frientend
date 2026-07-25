@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/store/hooks';
 import { signedOut } from '@/store/slices/authSlice';
 import { useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import { FiLogOut, FiAlertTriangle, FiX } from 'react-icons/fi';
 
 interface LogoutModalProps {
@@ -25,7 +25,7 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
         setIsLoggingOut(true);
         try {
             // 1. Call Backend Logout API to clear cookies
-            await axios.post('http://localhost:5000/api/auth/logout', {}, { withCredentials: true });
+            await api.post('/api/auth/logout', {});
         } catch (err) {
             console.error('Logout API call error:', err);
         } finally {

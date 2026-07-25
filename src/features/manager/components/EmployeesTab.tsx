@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import {
     FiSearch,
     FiFilter,
@@ -24,10 +24,7 @@ export default function EmployeesTab() {
     const { data: employees = [], isLoading } = useQuery<ManagerTeamEmployee[]>({
         queryKey: ['manager-employees', searchTerm, departmentFilter],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/manager/employees', {
-                params: { search: searchTerm, department: departmentFilter },
-                withCredentials: true,
-            });
+            const response = await api.get('/api/manager/employees');
             return response.data?.data || [];
         },
     });

@@ -15,12 +15,11 @@ interface AuthState {
     isAuthenticated: boolean;
     status: 'idle' | 'loading' | 'succeeded' | 'failed';
     error: string | null;
-    /** Email waiting for OTP verification (set after login/register API succeeds) */
+    /** Email waiting for OTP verification (set after login/forgot-password API succeeds) */
     pendingEmail: string | null;
-    /** Whether the pending OTP is for 'registration', 'login', or 'forgot-password' */
-    otpPurpose: 'registration' | 'login' | 'forgot-password' | null;
+    /** Whether the pending OTP is for 'login' or 'forgot-password' */
+    otpPurpose: 'login' | 'forgot-password' | null;
     resetEmail: string | null;
-
 }
 
 const initialState: AuthState = {
@@ -41,22 +40,14 @@ const authSlice = createSlice({
             state.status = 'loading';
             state.error = null;
         },
-        /** Called when login/register/forgot-password returns 200 with requiresOtp — OTP has been sent */
-        otpRequired(state, action: PayloadAction<{ email: string; purpose: 'registration' | 'login' | 'forgot-password' }>) {
+        /** Called when login/forgot-password returns 200 with requiresOtp — OTP has been sent */
+        otpRequired(state, action: PayloadAction<{ email: string; purpose: 'login' | 'forgot-password' }>) {
             state.status = 'idle';
             state.pendingEmail = action.payload.email;
             state.otpPurpose = action.payload.purpose;
             state.error = null;
         },
         signInSucceeded(state, action: PayloadAction<AuthUser>) {
-            state.status = 'succeeded';
-            state.user = action.payload;
-            state.isAuthenticated = true;
-            state.pendingEmail = null;
-            state.otpPurpose = null;
-            state.error = null;
-        },
-        registerSucceeded(state, action: PayloadAction<AuthUser>) {
             state.status = 'succeeded';
             state.user = action.payload;
             state.isAuthenticated = true;
@@ -76,7 +67,6 @@ const authSlice = createSlice({
             state.pendingEmail = null;
             state.otpPurpose = null;
             state.resetEmail = null;
-
         },
         setResetEmail(
             state,
@@ -91,11 +81,9 @@ export const {
     authRequestStarted,
     otpRequired,
     signInSucceeded,
-    registerSucceeded,
     authRequestFailed,
     signedOut,
     setResetEmail,
-
 } = authSlice.actions;
 
 export default authSlice.reducer;

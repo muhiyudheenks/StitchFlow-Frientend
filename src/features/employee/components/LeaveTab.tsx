@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import {
     FiCalendar,
     FiPlus,
@@ -23,9 +23,7 @@ export default function LeaveTab() {
     const { data: dashboardData } = useQuery({
         queryKey: ['employee-dashboard'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/employee/dashboard', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/employee/dashboard');
             return response.data?.data || {};
         },
     });
@@ -40,11 +38,7 @@ export default function LeaveTab() {
 
     const applyLeaveMutation = useMutation({
         mutationFn: async (leaveData: any) => {
-            const response = await axios.post(
-                'http://localhost:5000/api/employee/leaves',
-                leaveData,
-                { withCredentials: true }
-            );
+            const response = await api.post('/api/employee/leaves', leaveData);
             return response.data;
         },
         onSuccess: () => {

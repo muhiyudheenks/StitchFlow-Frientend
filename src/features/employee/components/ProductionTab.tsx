@@ -2,16 +2,14 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import { FiCpu, FiTarget, FiCheckCircle, FiClock, FiActivity } from 'react-icons/fi';
 
 export default function ProductionTab() {
     const { data: dashboardData } = useQuery({
         queryKey: ['employee-dashboard'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/employee/dashboard', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/employee/dashboard');
             return response.data?.data || {};
         },
     });

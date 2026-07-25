@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import {
     FiUser,
     FiMail,
@@ -36,9 +36,7 @@ export default function ProfileTab() {
     const { data: dashboardData } = useQuery({
         queryKey: ['employee-dashboard'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/employee/dashboard', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/employee/dashboard');
             return response.data?.data || {};
         },
     });
@@ -60,11 +58,7 @@ export default function ProfileTab() {
 
     const updateProfileMutation = useMutation({
         mutationFn: async (updatedData: any) => {
-            const response = await axios.patch(
-                'http://localhost:5000/api/employee/profile',
-                updatedData,
-                { withCredentials: true }
-            );
+            const response = await api.patch('/api/employee/profile', updatedData);
             return response.data;
         },
         onSuccess: () => {

@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiCheckCircle, FiUser, FiMail, FiShield, FiAlertCircle } from 'react-icons/fi';
-import axios, { AxiosError } from 'axios';
+import api from '@/config';
+import { AxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface QuickActionModalProps {
@@ -54,15 +55,11 @@ export default function QuickActionModal({ isOpen, actionType, onClose }: QuickA
         setLoading(true);
 
         try {
-            await axios.post(
-                'http://localhost:5000/api/auth/register',
-                {
-                    fullName: fullName.trim(),
-                    email: email.trim().toLowerCase(),
-                    role,
-                },
-                { withCredentials: true }
-            );
+            await api.post('/api/admin/users/create', {
+                fullName: fullName.trim(),
+                email: email.trim().toLowerCase(),
+                role,
+            });
 
             setSubmitted(true);
 

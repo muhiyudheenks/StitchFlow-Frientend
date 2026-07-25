@@ -285,10 +285,7 @@ export default function LoginPage() {
                         </form>
 
                         <div className="mt-8 text-center text-xs text-slate-500 font-medium">
-                            Don&apos;t have an account?{' '}
-                            <Link href="/register" className="font-extrabold text-purple-600 hover:text-purple-700 transition-colors">
-                                Sign Up
-                            </Link>
+                            Need an account? Contact your workspace administrator for an invitation link.
                         </div>
                     </motion.div>
                 </div>

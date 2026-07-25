@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import { EmployeeTab } from '../types';
 import {
     FiClock,
@@ -25,9 +25,7 @@ export default function OverviewTab({ onNavigateTab }: OverviewTabProps) {
     const { data: dashboardData, isLoading } = useQuery({
         queryKey: ['employee-dashboard'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/employee/dashboard', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/employee/dashboard');
             return response.data?.data || {};
         },
     });

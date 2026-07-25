@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import {
     FiClock,
     FiCheckCircle,
@@ -19,9 +19,7 @@ export default function AttendanceTab() {
     const { data: attendanceLogs = [], isLoading: isLoadingAtt } = useQuery<ManagerAttendanceRecord[]>({
         queryKey: ['manager-attendance'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/manager/attendance', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/manager/attendance');
             return response.data?.data || [];
         },
     });
@@ -29,20 +27,14 @@ export default function AttendanceTab() {
     const { data: leaveRequests = [], isLoading: isLoadingLeave } = useQuery<ManagerLeaveRequest[]>({
         queryKey: ['manager-leaves'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/manager/leaves', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/manager/leaves');
             return response.data?.data || [];
         },
     });
 
     const updateLeaveMutation = useMutation({
         mutationFn: async ({ leaveId, status }: { leaveId: string; status: 'approved' | 'rejected' }) => {
-            const response = await axios.patch(
-                `http://localhost:5000/api/manager/leaves/${leaveId}`,
-                { status },
-                { withCredentials: true }
-            );
+            const response = await api.patch(`/api/manager/leaves/${leaveId}`, { status });
             return response.data;
         },
         onSuccess: () => {

@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
+import api from '@/config';
 import { forgotPasswordSchema, type ForgotPasswordValues } from '../validations/authSchema';
 import { useAppDispatch } from '@/store/hooks';
 import { otpRequired, setResetEmail } from '../store/authSlice';
@@ -33,10 +34,7 @@ export default function ForgotPasswordPage() {
         ForgotPasswordValues
     >({
         mutationFn: async (data) => {
-            const response = await axios.post(
-                'http://localhost:5000/api/auth/forgot-password',
-                { email: data.email }
-            );
+            const response = await api.post('/api/auth/forgot-password', { email: data.email });
             return response.data;
         },
         onSuccess: (data, variables) => {

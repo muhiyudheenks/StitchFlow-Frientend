@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import {
     FiFileText,
     FiDownload,
@@ -16,9 +16,7 @@ export default function ReportsTab() {
     const { data: reportsData, isLoading } = useQuery<{ reports: ManagerReportItem[] }>({
         queryKey: ['manager-reports'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/manager/reports', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/manager/reports');
             return response.data?.data || { reports: [] };
         },
     });

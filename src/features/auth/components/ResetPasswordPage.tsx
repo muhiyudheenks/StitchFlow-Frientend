@@ -7,7 +7,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
+import api from '@/config';
 import { resetPasswordSchema, type ResetPasswordValues } from '../validations/authSchema';
 import { useAppSelector } from '@/store/hooks';
 import {
@@ -82,13 +83,10 @@ export default function ResetPasswordPage() {
         ResetPasswordValues
     >({
         mutationFn: async (data) => {
-            const response = await axios.post(
-                'http://localhost:5000/api/auth/reset-password',
-                {
-                    email,
-                    newpassword: data.newpassword,
-                }
-            );
+            const response = await api.post('/api/auth/reset-password', {
+                email,
+                newpassword: data.newpassword,
+            });
             return response.data;
         },
         onSuccess: (data: { message?: string }) => {

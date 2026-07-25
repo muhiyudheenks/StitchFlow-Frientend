@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import {
     FiBox,
     FiShield,
@@ -16,9 +16,7 @@ export default function InventoryTab() {
     const { data: inventoryData, isLoading } = useQuery<{ items: ManagerInventoryItem[]; alertsCount: number }>({
         queryKey: ['manager-inventory'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/manager/inventory', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/manager/inventory');
             return response.data?.data || { items: [], alertsCount: 0 };
         },
     });

@@ -14,7 +14,7 @@ import ReportsTab from './ReportsTab';
 import { ManagerTab } from '../types';
 import { FiX, FiCheckSquare } from 'react-icons/fi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 
 interface ManagerDashboardProps {
     initialTab?: ManagerTab;
@@ -51,9 +51,7 @@ export default function ManagerDashboard({ initialTab = 'overview' }: ManagerDas
 
     const createTaskMutation = useMutation({
         mutationFn: async (newTask: any) => {
-            const res = await axios.post('http://localhost:5000/api/manager/tasks', newTask, {
-                withCredentials: true,
-            });
+            const res = await api.post('/api/manager/tasks', newTask);
             return res.data;
         },
         onSuccess: () => {

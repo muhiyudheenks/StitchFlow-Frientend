@@ -19,6 +19,7 @@ import {
     FiAlertCircle,
     FiArrowLeft
 } from 'react-icons/fi';
+import api from '@/config';
 
 type StrengthLevel = 'weak' | 'fair' | 'good' | 'strong';
 
@@ -82,8 +83,8 @@ export default function SetPasswordPage({ token }: SetPasswordPageProps) {
 
         const checkToken = async () => {
             try {
-                const response = await axios.get(
-                    `http://localhost:5000/api/auth/verify-setup-token/${token}`
+                const response = await api.get(
+                    `/api/auth/verify-setup-token/${token}`
                 );
                 setUserInfo({
                     email: response.data.email,
@@ -108,8 +109,8 @@ export default function SetPasswordPage({ token }: SetPasswordPageProps) {
         ResetPasswordValues
     >({
         mutationFn: async (data) => {
-            const response = await axios.post(
-                'http://localhost:5000/api/auth/setup-password',
+            const response = await api.post(
+                '/api/auth/setup-password',
                 {
                     token,
                     newPassword: data.newpassword,

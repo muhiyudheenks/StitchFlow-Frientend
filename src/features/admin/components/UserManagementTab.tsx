@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios, { AxiosError } from 'axios';
+import api from '@/config';
+import { AxiosError } from 'axios';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -56,9 +57,7 @@ export default function UserManagementTab() {
     const { data: users = [], isLoading, refetch } = useQuery<ManagedUser[]>({
         queryKey: ['admin-users'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/admin/users', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/admin/users');
             return response.data?.data || [];
         },
     });
@@ -86,11 +85,7 @@ export default function UserManagementTab() {
         AddUserFormValues
     >({
         mutationFn: async (data) => {
-            const response = await axios.post(
-                'http://localhost:5000/api/admin/users/create',
-                data,
-                { withCredentials: true }
-            );
+            const response = await api.post('/api/admin/users/create', data);
             return response.data;
         },
         onSuccess: (data) => {

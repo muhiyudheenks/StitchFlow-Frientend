@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/config';
 import {
     FiCpu,
     FiPlus,
@@ -23,20 +23,14 @@ export default function ProductionTab() {
     const { data: batches = [], isLoading } = useQuery<ManagerProductionBatch[]>({
         queryKey: ['manager-production'],
         queryFn: async () => {
-            const response = await axios.get('http://localhost:5000/api/manager/production', {
-                withCredentials: true,
-            });
+            const response = await api.get('/api/manager/production');
             return response.data?.data || [];
         },
     });
 
     const createBatchMutation = useMutation({
         mutationFn: async (batchData: any) => {
-            const response = await axios.post(
-                'http://localhost:5000/api/manager/production',
-                batchData,
-                { withCredentials: true }
-            );
+            const response = await api.post('/api/manager/production', batchData);
             return response.data;
         },
         onSuccess: () => {
@@ -50,11 +44,7 @@ export default function ProductionTab() {
 
     const updateStatusMutation = useMutation({
         mutationFn: async ({ id, status }: { id: string; status: string }) => {
-            const response = await axios.put(
-                `http://localhost:5000/api/manager/production/${id}`,
-                { status },
-                { withCredentials: true }
-            );
+            const response = await api.put(`/api/manager/production/${id}`, { status });
             return response.data;
         },
         onSuccess: () => {
