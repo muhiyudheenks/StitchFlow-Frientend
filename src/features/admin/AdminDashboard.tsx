@@ -28,6 +28,8 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
     const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
     const [quickActionType, setQuickActionType] = useState('Add Employee');
 
+    const [mobileOpen, setMobileOpen] = useState(false);
+
     useEffect(() => {
         if (initialTab) {
             setActiveTabState(initialTab);
@@ -90,6 +92,8 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
                 setActiveTab={setActiveTab}
                 collapsed={collapsed}
                 setCollapsed={setCollapsed}
+                mobileOpen={mobileOpen}
+                setMobileOpen={setMobileOpen}
             />
 
             {/* Main Content Area */}
@@ -97,9 +101,10 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
                 <Header
                     activeTab={activeTab}
                     onOpenQuickAction={handleOpenQuickAction}
+                    onToggleMobileMenu={() => setMobileOpen(!mobileOpen)}
                 />
 
-                <main className="flex-1 p-6 md:p-10 max-w-7xl w-full mx-auto space-y-8">
+                <main className="flex-1 p-4 sm:p-6 md:p-10 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
                     {renderActiveTab()}
                 </main>
             </div>

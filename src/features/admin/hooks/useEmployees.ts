@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { getEmployees } from "../services/employees-service";
+import { getEmployees, GetEmployeesParams } from "../services/employees-service";
 
-export const useEmployees = () => {
+export const useEmployees = (params?: GetEmployeesParams) => {
     return useQuery({
-        queryKey: ["employees"],
-        queryFn: getEmployees,
+        queryKey: ["admin-employees", params],
+        queryFn: () => getEmployees(params),
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
     });

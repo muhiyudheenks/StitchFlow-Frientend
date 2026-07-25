@@ -92,7 +92,7 @@ export default function QuickActionModal({ isOpen, actionType, onClose }: QuickA
                     initial={{ opacity: 0, scale: 0.95, y: 15 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                    className="relative w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl overflow-hidden font-sans"
+                    className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl font-sans"
                 >
                     {/* Top Bar */}
                     <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">

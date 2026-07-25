@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: 'StitchFlow',
   description:
     'The next generation of garment manufacturing. Data-driven workflows, real-time analytics, and automated supply chain orchestration.',
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

@@ -25,6 +25,8 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
     const [activeTab, setActiveTabState] = useState<EmployeeTab>(initialTab);
     const [collapsed, setCollapsed] = useState(false);
 
+    const [mobileOpen, setMobileOpen] = useState(false);
+
     useEffect(() => {
         if (initialTab) {
             setActiveTabState(initialTab);
@@ -72,6 +74,8 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
                 setActiveTab={setActiveTab}
                 collapsed={collapsed}
                 setCollapsed={setCollapsed}
+                mobileOpen={mobileOpen}
+                setMobileOpen={setMobileOpen}
             />
 
             {/* Main Workspace Area */}
@@ -79,9 +83,10 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
                 <Header
                     activeTab={activeTab}
                     onNavigateTab={setActiveTab}
+                    onToggleMobileMenu={() => setMobileOpen(!mobileOpen)}
                 />
 
-                <main className="flex-1 p-6 md:p-10 max-w-7xl w-full mx-auto space-y-8">
+                <main className="flex-1 p-4 sm:p-6 md:p-10 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
                     {renderActiveTab()}
                 </main>
             </div>

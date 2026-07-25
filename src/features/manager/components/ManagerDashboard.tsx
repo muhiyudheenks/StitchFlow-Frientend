@@ -26,6 +26,8 @@ export default function ManagerDashboard({ initialTab = 'overview' }: ManagerDas
     const [activeTab, setActiveTabState] = useState<ManagerTab>(initialTab);
     const [collapsed, setCollapsed] = useState(false);
 
+    const [mobileOpen, setMobileOpen] = useState(false);
+
     // Quick Task Modal
     const [isQuickTaskOpen, setIsQuickTaskOpen] = useState(false);
     const [quickTitle, setQuickTitle] = useState('');
@@ -99,6 +101,8 @@ export default function ManagerDashboard({ initialTab = 'overview' }: ManagerDas
                 setActiveTab={setActiveTab}
                 collapsed={collapsed}
                 setCollapsed={setCollapsed}
+                mobileOpen={mobileOpen}
+                setMobileOpen={setMobileOpen}
             />
 
             {/* Main Workspace Area */}
@@ -106,9 +110,10 @@ export default function ManagerDashboard({ initialTab = 'overview' }: ManagerDas
                 <Header
                     activeTab={activeTab}
                     onOpenQuickAction={handleOpenQuickAction}
+                    onToggleMobileMenu={() => setMobileOpen(!mobileOpen)}
                 />
 
-                <main className="flex-1 p-6 md:p-10 max-w-7xl w-full mx-auto space-y-8">
+                <main className="flex-1 p-4 sm:p-6 md:p-10 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
                     {renderActiveTab()}
                 </main>
             </div>

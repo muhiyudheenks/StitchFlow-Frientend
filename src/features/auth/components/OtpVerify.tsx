@@ -153,8 +153,13 @@ export default function OtpVerify() {
                     email: pendingEmail,
                     code,
                     purpose: otpPurpose ?? 'registration',
-                }
+                },
+                { withCredentials: true }
             );
+
+            if (data.token) {
+                localStorage.setItem("token", data.token);
+            }
 
             setIsVerified(true);
 

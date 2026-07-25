@@ -12,21 +12,47 @@ import {
     FiUser,
     FiSettings,
     FiLogOut,
-    FiPlus
+    FiMenu
 } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import LogoutModal from '@/shared/components/LogoutModal';
+import { useAppSelector } from '@/store/hooks';
+import { useEffect } from 'react';
 
 interface HeaderProps {
     activeTab: AdminTab;
-    onOpenQuickAction: (actionType: string) => void;
+    onOpenQuickAction?: (actionType: string) => void;
+    onToggleMobileMenu?: () => void;
 }
 
-export default function Header({ activeTab, onOpenQuickAction }: HeaderProps) {
+export default function Header({ activeTab, onOpenQuickAction, onToggleMobileMenu }: HeaderProps) {
     const router = useRouter();
     const [darkMode, setDarkMode] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+    const reduxUser = useAppSelector((state) => state.auth.user);
+    const [localUser, setLocalUser] = useState<{ fullName?: string; email?: string } | null>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const raw = localStorage.getItem('user');
+            if (raw) {
+                try {
+                    setLocalUser(JSON.parse(raw));
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+    }, []);
+
+    const user = reduxUser || localUser;
+    const adminName = user?.fullName || 'Admin User';
+    const adminEmail = user?.email || 'admin@stitchflow.com';
+    const initials = adminName
+        ? adminName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+        : 'AU';
 
     const getTabTitle = (tab: AdminTab) => {
         switch (tab) {
@@ -59,15 +85,25 @@ export default function Header({ activeTab, onOpenQuickAction }: HeaderProps) {
 
     return (
         <>
-            <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-xl px-6 md:px-10 font-sans shadow-xs">
-                {/* Title & Description */}
-                <div className="flex flex-col">
-                    <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight">
-                        {headerMeta.title}
-                    </h1>
-                    <p className="text-xs text-slate-500 hidden sm:block mt-0.5">
-                        {headerMeta.desc}
-                    </p>
+            <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-xl px-4 sm:px-6 md:px-10 font-sans shadow-xs">
+                {/* Title & Mobile Toggle */}
+                <div className="flex items-center gap-3 min-w-0">
+                    <button
+                        onClick={onToggleMobileMenu}
+                        className="md:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-xs"
+                        aria-label="Toggle Mobile Menu"
+                    >
+                        <FiMenu size={18} />
+                    </button>
+
+                    <div className="flex flex-col min-w-0">
+                        <h1 className="text-lg sm:text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight truncate">
+                            {headerMeta.title}
+                        </h1>
+                        <p className="text-xs text-slate-500 hidden sm:block mt-0.5 truncate">
+                            {headerMeta.desc}
+                        </p>
+                    </div>
                 </div>
 
                 {/* Right Controls */}
@@ -81,15 +117,6 @@ export default function Header({ activeTab, onOpenQuickAction }: HeaderProps) {
                             className="w-full h-10 rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-4 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-purple-500 focus:bg-white focus:ring-2 focus:ring-purple-100 transition-all"
                         />
                     </div>
-
-                    {/* Quick Action Button */}
-                    <button
-                        onClick={() => onOpenQuickAction('Add Employee')}
-                        className="hidden lg:flex items-center gap-2 h-10 px-4 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-all shadow-sm active:scale-[0.98]"
-                    >
-                        <FiPlus size={15} />
-                        <span>Quick Action</span>
-                    </button>
 
                     <div className="h-6 w-px bg-slate-200 hidden sm:block" />
 
@@ -153,10 +180,10 @@ export default function Header({ activeTab, onOpenQuickAction }: HeaderProps) {
                             className="flex items-center gap-2.5 p-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-all shadow-2xs cursor-pointer"
                         >
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-extrabold text-xs shadow-sm">
-                                AV
+                                {initials}
                             </div>
                             <span className="text-xs font-bold text-slate-800 hidden lg:block">
-                                Alex Vance
+                                {adminName}
                             </span>
                             <FiChevronDown size={14} className="text-slate-400" />
                         </button>
@@ -164,8 +191,8 @@ export default function Header({ activeTab, onOpenQuickAction }: HeaderProps) {
                         {profileOpen && (
                             <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-200/90 bg-white p-2 shadow-xl text-xs z-50">
                                 <div className="p-3 border-b border-slate-100 mb-1">
-                                    <p className="font-bold text-slate-900">Alex Vance</p>
-                                    <p className="text-[11px] text-slate-400">alex.vance@stitchflow.com</p>
+                                    <p className="font-bold text-slate-900">{adminName}</p>
+                                    <p className="text-[11px] text-slate-400">{adminEmail}</p>
                                 </div>
                                 <button
                                     onClick={() => setProfileOpen(false)}

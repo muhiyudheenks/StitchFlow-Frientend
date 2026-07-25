@@ -1,11 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiSettings, FiLock, FiBell, FiShield, FiSave, FiCheckCircle } from 'react-icons/fi';
+import { useAppSelector } from '@/store/hooks';
 
 export default function SettingsTab() {
     const [saved, setSaved] = useState(false);
+    const reduxUser = useAppSelector((state) => state.auth.user);
+    const [localEmail, setLocalEmail] = useState<string>('admin@stitchflow.com');
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const raw = localStorage.getItem('user');
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed?.email) setLocalEmail(parsed.email);
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+    }, []);
+
+    const adminEmail = reduxUser?.email || localEmail;
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,7 +63,7 @@ export default function SettingsTab() {
                         </div>
                         <div>
                             <label className="block font-bold text-slate-700 mb-1">Super Admin Contact</label>
-                            <input type="email" defaultValue="alex.vance@stitchflow.com" className="w-full h-11 px-3.5 rounded-xl border border-slate-200 outline-none focus:border-purple-500 font-medium" />
+                            <input type="email" defaultValue={adminEmail} key={adminEmail} className="w-full h-11 px-3.5 rounded-xl border border-slate-200 outline-none focus:border-purple-500 font-medium" />
                         </div>
                     </div>
                 </motion.div>

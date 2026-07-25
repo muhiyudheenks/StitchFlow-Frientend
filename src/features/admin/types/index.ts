@@ -13,13 +13,30 @@ export type AdminTab =
 export interface Employee {
     id: string;
     name: string;
+    fullName?: string;
     avatar?: string;
     email: string;
     department: string;
+    designation?: string;
     role: string;
     status: 'Active' | 'On Leave' | 'Inactive';
     shift: 'Shift A' | 'Shift B' | 'Night Shift';
     attendanceRate: number;
+    isVerified?: boolean;
+    createdAt?: string;
+}
+
+export interface EmployeesResponse {
+    success: boolean;
+    message: string;
+    employees?: Employee[];
+    data?: Employee[];
+    pagination?: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
 }
 
 export interface Manager {
@@ -84,12 +101,4 @@ export interface RecentActivity {
     description: string;
     time: string;
     type: 'production' | 'attendance' | 'inventory' | 'employee' | 'system';
-}
-
-export interface Employee {
-    id: string;
-    fullName: string;
-    email: string;
-    department: string;
-    role: string;
 }

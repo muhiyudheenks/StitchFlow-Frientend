@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EmployeeTab } from '../types';
 import {
     FiSearch,
@@ -10,13 +10,16 @@ import {
     FiClock,
     FiChevronDown,
     FiUser,
-    FiLogOut
+    FiLogOut,
+    FiMenu
 } from 'react-icons/fi';
 import LogoutModal from '@/shared/components/LogoutModal';
+import { useAppSelector } from '@/store/hooks';
 
 interface HeaderProps {
     activeTab: EmployeeTab;
     onNavigateTab: (tab: EmployeeTab) => void;
+    onToggleMobileMenu?: () => void;
 }
 
 const tabTitles: Record<EmployeeTab, { title: string; subtitle: string }> = {
@@ -32,30 +35,63 @@ const tabTitles: Record<EmployeeTab, { title: string; subtitle: string }> = {
     support: { title: 'Help Desk & Manager Contact', subtitle: 'Direct HR / Manager contact links, issue report form & FAQs' },
 };
 
-export default function Header({ activeTab, onNavigateTab }: HeaderProps) {
+export default function Header({ activeTab, onNavigateTab, onToggleMobileMenu }: HeaderProps) {
     const currentInfo = tabTitles[activeTab] || tabTitles.dashboard;
     const [profileOpen, setProfileOpen] = useState(false);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
+    const reduxUser = useAppSelector((state) => state.auth.user);
+    const [localUser, setLocalUser] = useState<{ fullName?: string; email?: string } | null>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const raw = localStorage.getItem('user');
+            if (raw) {
+                try {
+                    setLocalUser(JSON.parse(raw));
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+    }, []);
+
+    const user = reduxUser || localUser;
+    const userName = user?.fullName || 'Employee User';
+    const userEmail = user?.email || 'employee@stitchflow.com';
+    const initials = userName
+        ? userName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+        : 'EU';
+
     return (
         <>
-            <header className="sticky top-0 z-20 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 px-6 py-4 md:px-10 font-sans">
-                <div>
-                    <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-purple-600">
-                        <FiUserCheck size={13} />
-                        <span>Operator Workstation</span>
+            <header className="sticky top-0 z-20 flex flex-row items-center justify-between gap-4 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-6 py-4 md:px-10 font-sans">
+                <div className="flex items-center gap-3 min-w-0">
+                    <button
+                        onClick={onToggleMobileMenu}
+                        className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-xs"
+                        aria-label="Toggle Mobile Menu"
+                    >
+                        <FiMenu size={18} />
+                    </button>
+
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-purple-600">
+                            <FiUserCheck size={13} />
+                            <span>Operator Workstation</span>
+                        </div>
+                        <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight truncate">
+                            {currentInfo.title}
+                        </h1>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5 hidden sm:block truncate">
+                            {currentInfo.subtitle}
+                        </p>
                     </div>
-                    <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-                        {currentInfo.title}
-                    </h1>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">
-                        {currentInfo.subtitle}
-                    </p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     {/* Search Bar */}
-                    <div className="relative hidden sm:block w-60">
+                    <div className="relative hidden sm:block w-48 md:w-60">
                         <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
                         <input
                             type="text"
@@ -93,10 +129,10 @@ export default function Header({ activeTab, onNavigateTab }: HeaderProps) {
                             className="flex items-center gap-2.5 p-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-all cursor-pointer"
                         >
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-extrabold text-xs shadow-sm">
-                                AV
+                                {initials}
                             </div>
                             <span className="text-xs font-bold text-slate-800 hidden lg:block">
-                                Alex Vance
+                                {userName}
                             </span>
                             <FiChevronDown size={14} className="text-slate-400" />
                         </button>
@@ -104,8 +140,8 @@ export default function Header({ activeTab, onNavigateTab }: HeaderProps) {
                         {profileOpen && (
                             <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-200/90 bg-white p-2 shadow-xl text-xs z-50">
                                 <div className="p-3 border-b border-slate-100 mb-1">
-                                    <p className="font-bold text-slate-900">Alex Vance</p>
-                                    <p className="text-[11px] text-slate-400">alexander@stitchflow.ai</p>
+                                    <p className="font-bold text-slate-900">{userName}</p>
+                                    <p className="text-[11px] text-slate-400">{userEmail}</p>
                                 </div>
                                 <button
                                     onClick={() => {
