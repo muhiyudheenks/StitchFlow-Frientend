@@ -107,6 +107,7 @@ export default function OtpVerify() {
         if (!pendingEmail) return;
         setResending(true);
         setFormError(null);
+        console.log(process.env.NEXT_PUBLIC_API_URL, 'url');
         try {
             await api.post('/api/auth/resend-otp', {
                 email: pendingEmail,
