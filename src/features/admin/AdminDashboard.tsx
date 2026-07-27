@@ -11,6 +11,7 @@ import ManagersTab from './components/ManagersTab';
 import ProductionTab from './components/ProductionTab';
 import InventoryTab from './components/InventoryTab';
 import AttendanceTab from './components/AttendanceTab';
+import SupportTicketsTab from './components/SupportTicketsTab';
 import AnalyticsTab from './components/AnalyticsTab';
 import ReportsTab from './components/ReportsTab';
 import SettingsTab from './components/SettingsTab';
@@ -68,6 +69,8 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
                 return <InventoryTab onOpenQuickAction={handleOpenQuickAction} />;
             case 'attendance':
                 return <AttendanceTab />;
+            case 'support':
+                return <SupportTicketsTab />;
             case 'analytics':
                 return <AnalyticsTab />;
             case 'reports':
@@ -85,7 +88,7 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
     };
 
     return (
-        <div className="flex min-h-screen bg-[#FAFAFC] font-sans antialiased text-slate-900 selection:bg-purple-500 selection:text-white">
+        <div className="flex min-h-screen bg-[#FAFAFC] dark:bg-[#090D16] font-sans antialiased text-slate-900 dark:text-slate-100 selection:bg-purple-500 selection:text-white transition-colors">
             {/* Sidebar */}
             <Sidebar
                 activeTab={activeTab}

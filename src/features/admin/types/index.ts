@@ -8,21 +8,23 @@ export type AdminTab =
     | 'attendance'
     | 'analytics'
     | 'reports'
-    | 'settings';
+    | 'settings'
+    | 'support';
 
 export interface Employee {
     id: string;
-    name: string;
+    name?: string;
     fullName?: string;
     avatar?: string;
     email: string;
-    department: string;
+    department?: string;
     designation?: string;
-    role: string;
-    status: 'Active' | 'On Leave' | 'Inactive';
-    shift: 'Shift A' | 'Shift B' | 'Night Shift';
-    attendanceRate: number;
+    role?: string;
+    status?: string;
+    shift?: string;
+    attendanceRate?: number;
     isVerified?: boolean;
+    isBlock?: boolean;
     createdAt?: string;
 }
 
@@ -41,15 +43,20 @@ export interface EmployeesResponse {
 
 export interface Manager {
     id: string;
-    name: string;
+    name?: string;
+    fullName?: string;
     avatar?: string;
     email: string;
-    department: string;
-    employeesCount: number;
-    activeTasksCount: number;
-    performanceScore: number;
-    assignedLine: string;
-    status: 'Active' | 'On Leave';
+    department?: string;
+    designation?: string;
+    employeesCount?: number;
+    activeTasksCount?: number;
+    performanceScore?: number;
+    assignedLine?: string;
+    status?: string;
+    isVerified?: boolean;
+    isBlock?: boolean;
+    createdAt?: string;
 }
 
 export interface ProductionLine {

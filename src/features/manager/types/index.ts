@@ -5,7 +5,8 @@ export type ManagerTab =
     | 'attendance'
     | 'production'
     | 'inventory'
-    | 'reports';
+    | 'reports'
+    | 'support';
 
 export interface ManagerTask {
     id: string;
@@ -20,13 +21,15 @@ export interface ManagerTask {
 
 export interface ManagerProductionBatch {
     id: string;
-    batchNumber: string;
-    productName: string;
-    targetQuantity: number;
-    completedQuantity: number;
-    line: string;
-    status: 'planned' | 'in_production' | 'quality_check' | 'completed';
-    dueDate: string;
+    _id?: string;
+    batchName: string;
+    managerName?: string;
+    employeesCount?: number;
+    finishingWorkersCount?: number;
+    progressPercentage?: number;
+    status: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    notes?: string;
+    createdAt?: string;
 }
 
 export interface ManagerTeamEmployee {
@@ -65,13 +68,17 @@ export interface ManagerLeaveRequest {
 
 export interface ManagerInventoryItem {
     id: string;
-    sku: string;
+    _id?: string;
+    sku?: string;
     name: string;
-    category: string;
-    quantity: number;
-    unit: string;
-    reorderLevel: number;
-    status: 'in_stock' | 'low_stock' | 'critical';
+    category?: string;
+    quantity?: number;
+    stock?: number;
+    unit?: string;
+    reorderLevel?: number;
+    minimumStock?: number;
+    status?: string;
+    location?: string;
 }
 
 export interface ManagerReportItem {

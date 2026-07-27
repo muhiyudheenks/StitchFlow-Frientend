@@ -5,7 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/config';
 import {
     FiHelpCircle,
-    FiUser,
+    FiUserCheck,
+    FiShield,
     FiMail,
     FiPhone,
     FiMessageSquare,
@@ -16,7 +17,6 @@ import {
     FiAlertCircle,
     FiPaperclip,
     FiFileText,
-    FiShield,
     FiTool,
     FiCrosshair,
     FiDownload,
@@ -24,11 +24,11 @@ import {
     FiX,
 } from 'react-icons/fi';
 
-export default function SupportTab() {
+export default function ManagerSupportTab() {
     const queryClient = useQueryClient();
 
     // Form State
-    const [category, setCategory] = useState('Attendance');
+    const [category, setCategory] = useState('Production Issue');
     const [subject, setSubject] = useState('');
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
@@ -43,29 +43,18 @@ export default function SupportTab() {
     const [successToast, setSuccessToast] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-    // Employee Ticket Categories
-    const employeeCategories = [
-        'Attendance',
-        'Leave',
-        'Salary',
-        'Production',
-        'Machine Issue',
-        'Inventory',
-        'Login/System',
-        'Quality',
+    // Manager Ticket Categories
+    const managerCategories = [
+        'Production Issue',
+        'Inventory Issue',
+        'System Bug',
+        'Machine Breakdown',
+        'HR Request',
+        'Employee Issue',
         'Other',
     ];
 
-    // 1. Fetch Line Manager
-    const { data: manager } = useQuery({
-        queryKey: ['support-manager'],
-        queryFn: async () => {
-            const res = await api.get('/api/support/manager');
-            return res.data?.data || null;
-        },
-    });
-
-    // 2. Fetch HR Contact
+    // 1. Fetch HR Contact
     const { data: hrInfo } = useQuery({
         queryKey: ['support-hr'],
         queryFn: async () => {
@@ -74,22 +63,22 @@ export default function SupportTab() {
         },
     });
 
-    // 3. Fetch My Tickets
+    // 2. Fetch My Tickets
     const { data: allMyTickets = [], isLoading: isLoadingTickets } = useQuery({
-        queryKey: ['employee-my-tickets'],
+        queryKey: ['manager-my-tickets'],
         queryFn: async () => {
             const res = await api.get('/api/support/my-tickets');
             return res.data?.data || [];
         },
     });
 
-    // Filter tickets on client
+    // Filter tickets
     const tickets = allMyTickets.filter((t: any) => {
         if (statusFilter === 'ALL') return true;
         return t.status === statusFilter;
     });
 
-    // 4. Fetch FAQs
+    // 3. Fetch FAQs
     const { data: faqs = [] } = useQuery({
         queryKey: ['support-faqs'],
         queryFn: async () => {
@@ -98,7 +87,7 @@ export default function SupportTab() {
         },
     });
 
-    // 5. Fetch Emergency Contacts
+    // 4. Fetch Emergency Contacts
     const { data: contacts } = useQuery({
         queryKey: ['support-contacts'],
         queryFn: async () => {
@@ -107,7 +96,7 @@ export default function SupportTab() {
         },
     });
 
-    // 6. Fetch Company Documents
+    // 5. Fetch Company Documents
     const { data: documents = [] } = useQuery({
         queryKey: ['support-documents'],
         queryFn: async () => {
@@ -123,12 +112,12 @@ export default function SupportTab() {
             return res.data;
         },
         onSuccess: () => {
-            setSuccessToast('Support ticket submitted to Admin! Line Manager & HR notified.');
+            setSuccessToast('Manager support ticket submitted! Admin notified.');
             setSubject('');
             setDescription('');
             setAttachmentName('');
             setErrorMsg(null);
-            queryClient.invalidateQueries({ queryKey: ['employee-my-tickets'] });
+            queryClient.invalidateQueries({ queryKey: ['manager-my-tickets'] });
 
             setTimeout(() => setSuccessToast(null), 4000);
         },
@@ -162,13 +151,13 @@ export default function SupportTab() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'OPEN':
-                return 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900/50';
+                return 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200';
             case 'IN_PROGRESS':
-                return 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/50';
+                return 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200';
             case 'RESOLVED':
-                return 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50';
+                return 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200';
             case 'CLOSED':
-                return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700';
+                return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300';
             default:
                 return 'bg-slate-100 text-slate-700 border-slate-200';
         }
@@ -204,96 +193,51 @@ export default function SupportTab() {
             <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1">
                     <FiHelpCircle size={14} />
-                    <span>Employee Help Desk &amp; Support OS</span>
+                    <span>Manager Support &amp; Escalations Desk</span>
                 </div>
-                <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Help &amp; Support Center</h2>
+                <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Manager Help &amp; Support</h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Raise support requests directly to Admin, contact your Line Manager &amp; HR, read factory FAQs, and download company policies.
+                    Escalate production, machine breakdown, or system issues directly to Admin, contact HR, and access factory documentation.
                 </p>
             </div>
 
-            {/* Quick Contacts Grid */}
+            {/* Quick Contact Buttons (Contact HR & Contact Admin) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Line Manager */}
-                <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-400">My Line Manager</span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            {manager?.status || 'Online'}
-                        </span>
+                <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3 flex items-center justify-between">
+                    <div>
+                        <span className="text-[10px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400">Human Resources (HR)</span>
+                        <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-1">{hrInfo?.hrName || 'StitchFlow HR Helpdesk'}</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{hrInfo?.email || 'hr@stitchflow.ai'} • {hrInfo?.phone || '+91 98765 43210'}</p>
                     </div>
-
-                    <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center font-extrabold text-base shadow-md">
-                            {manager?.fullName ? manager.fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : 'LM'}
-                        </div>
-                        <div className="space-y-1 min-w-0">
-                            <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate">{manager?.fullName || 'Robert Vance'}</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{manager?.designation || 'Senior Line Supervisor'}</p>
-                            <div className="text-[11px] text-slate-400 dark:text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 font-mono">
-                                <span>ID: {manager?.employeeId || 'EMP-MGR-001'}</span>
-                                <span>•</span>
-                                <span>{manager?.department || 'Garment Line A'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <a
-                            href={`mailto:${manager?.email || 'manager@stitchflow.ai'}`}
-                            className="flex-1 py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"
-                        >
-                            <FiMail size={14} /> <span>Contact Manager</span>
-                        </a>
-                        <button
-                            onClick={() => alert(`Manager Profile:\nName: ${manager?.fullName}\nPhone: ${manager?.phone}\nEmail: ${manager?.email}`)}
-                            className="py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
-                        >
-                            <FiUser size={14} /> <span>View Profile</span>
-                        </button>
-                    </div>
+                    <a
+                        href={`mailto:${hrInfo?.email || 'hr@stitchflow.ai'}?subject=Manager HR Request`}
+                        className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm shrink-0"
+                    >
+                        <FiUserCheck size={14} /> <span>Contact HR</span>
+                    </a>
                 </div>
 
-                {/* HR Contact */}
-                <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Human Resources (HR)</span>
-                        <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">{hrInfo?.workingHours || '08:00 AM - 06:00 PM'}</span>
+                <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3 flex items-center justify-between">
+                    <div>
+                        <span className="text-[10px] font-extrabold uppercase text-purple-600 dark:text-purple-400">System Admin Hotline</span>
+                        <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-1">StitchFlow ERP Executive Admin</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">admin@stitchflow.ai • 24/7 Operations Support</p>
                     </div>
-
-                    <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-900 dark:bg-purple-950 text-white flex items-center justify-center font-extrabold text-base shadow-md">
-                            HR
-                        </div>
-                        <div className="space-y-1 min-w-0">
-                            <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate">{hrInfo?.hrName || 'StitchFlow HR Helpdesk'}</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{hrInfo?.email || 'hr@stitchflow.ai'}</p>
-                            <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-3 pt-1 font-mono">
-                                <span>Phone: {hrInfo?.phone || '+91 98765 43210'}</span>
-                                <span>•</span>
-                                <span>{hrInfo?.officeExtension || 'Ext 402'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <a
-                            href={`mailto:${hrInfo?.email || 'hr@stitchflow.ai'}?subject=HR Inquiry from Employee`}
-                            className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-500 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-colors shadow-sm"
-                        >
-                            <FiPhone size={14} /> <span>Contact HR</span>
-                        </a>
-                    </div>
+                    <a
+                        href="mailto:admin@stitchflow.ai?subject=Urgent Manager Escalation"
+                        className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm shrink-0"
+                    >
+                        <FiMail size={14} /> <span>Contact Admin</span>
+                    </a>
                 </div>
             </div>
 
-            {/* Ticket Creation & My Tickets Grid */}
+            {/* Raise Support Ticket & My Tickets Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Raise Ticket Form */}
+                {/* Raise Support Ticket */}
                 <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4 h-fit">
                     <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                        <FiMessageSquare className="text-purple-600 dark:text-purple-400" /> Raise Support Ticket
+                        <FiMessageSquare className="text-purple-600 dark:text-purple-400" /> Raise Manager Ticket to Admin
                     </h3>
 
                     {errorMsg && (
@@ -305,13 +249,13 @@ export default function SupportTab() {
                     <form onSubmit={handleCreateTicketSubmit} className="space-y-4 text-xs font-medium">
                         {/* Category */}
                         <div>
-                            <label className="block font-extrabold text-slate-700 dark:text-slate-300 mb-1">Category *</label>
+                            <label className="block font-extrabold text-slate-700 dark:text-slate-300 mb-1">Issue Category *</label>
                             <select
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
                                 className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:border-purple-500 font-bold"
                             >
-                                {employeeCategories.map((cat) => (
+                                {managerCategories.map((cat) => (
                                     <option key={cat} value={cat}>
                                         {cat}
                                     </option>
@@ -321,7 +265,7 @@ export default function SupportTab() {
 
                         {/* Priority */}
                         <div>
-                            <label className="block font-extrabold text-slate-700 dark:text-slate-300 mb-1">Priority *</label>
+                            <label className="block font-extrabold text-slate-700 dark:text-slate-300 mb-1">Priority Level *</label>
                             <div className="grid grid-cols-3 gap-2">
                                 {(['Low', 'Medium', 'High'] as const).map((p) => (
                                     <button
@@ -345,7 +289,7 @@ export default function SupportTab() {
                             <input
                                 type="text"
                                 required
-                                placeholder="e.g. Discrepancy in June attendance hours"
+                                placeholder="e.g. Cutting machine #4 drive belt breakdown on Line 2"
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
                                 className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:border-purple-500"
@@ -354,11 +298,11 @@ export default function SupportTab() {
 
                         {/* Description */}
                         <div>
-                            <label className="block font-extrabold text-slate-700 dark:text-slate-300 mb-1">Description *</label>
+                            <label className="block font-extrabold text-slate-700 dark:text-slate-300 mb-1">Detailed Description *</label>
                             <textarea
                                 rows={3}
                                 required
-                                placeholder="Provide detailed information regarding the support request..."
+                                placeholder="Detail the operational breakdown, system error, or HR escalation..."
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:border-purple-500"
@@ -395,7 +339,7 @@ export default function SupportTab() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
                         <div>
                             <h3 className="text-base font-extrabold text-slate-900 dark:text-white">My Support Tickets</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">View status of tickets raised to ERP Admin.</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Track progress of tickets raised to ERP Admin.</p>
                         </div>
 
                         <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
@@ -419,7 +363,7 @@ export default function SupportTab() {
                     ) : tickets.length === 0 ? (
                         <div className="p-12 text-center text-slate-400 font-semibold space-y-2">
                             <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No support tickets logged yet.</p>
-                            <p className="text-xs text-slate-400">Use the form to raise a support ticket to ERP Admin.</p>
+                            <p className="text-xs text-slate-400">Use the form to escalate production or system issues to Admin.</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -471,7 +415,7 @@ export default function SupportTab() {
                 </div>
             </div>
 
-            {/* FAQs & Emergency Contacts */}
+            {/* FAQs & Emergency Contacts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* FAQs */}
                 <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
@@ -501,7 +445,7 @@ export default function SupportTab() {
 
                 {/* Emergency Contacts */}
                 <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Emergency Contacts</h3>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Emergency Hotline</h3>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 space-y-1">
                             <FiShield className="text-rose-600 dark:text-rose-400" size={18} />
@@ -533,7 +477,7 @@ export default function SupportTab() {
             {/* Documents */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
                 <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                    <FiFileText className="text-purple-600 dark:text-purple-400" /> Company Policy &amp; Factory Documents
+                    <FiFileText className="text-purple-600 dark:text-purple-400" /> Company Policy &amp; Operations Manuals
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {documents.map((doc: any) => (

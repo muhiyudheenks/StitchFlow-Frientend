@@ -6,6 +6,7 @@ import {
     FiCpu,
     FiBox,
     FiFileText,
+    FiHelpCircle,
 } from 'react-icons/fi';
 import { ManagerTab } from '../types';
 
@@ -24,4 +25,5 @@ export const managerNavItems: ManagerNavItem[] = [
     { id: 'production', label: 'Production Line', icon: FiCpu, badge: 'Live' },
     { id: 'inventory', label: 'Inventory (Read-Only)', icon: FiBox },
     { id: 'reports', label: 'Reports & Analytics', icon: FiFileText },
+    { id: 'support', label: 'Help & Support', icon: FiHelpCircle },
 ];

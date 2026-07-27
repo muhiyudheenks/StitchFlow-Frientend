@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-accent: #2563eb;
   --color-accentLight: #93c5fd;
@@ -44,9 +46,16 @@ body {
   padding: 0;
   width: 100%;
   min-height: 100%;
-  background: #050f19;
-  color: #ffffff;
+  background-color: #fafafc;
+  color: #0f172a;
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+html.dark,
+html.dark body {
+  background-color: #090d16;
+  color: #f8fafc;
 }
 
 * {
@@ -60,4 +69,14 @@ a {
 
 button {
   cursor: pointer;
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

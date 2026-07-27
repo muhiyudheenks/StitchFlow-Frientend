@@ -8,7 +8,6 @@ import OverviewTab from './OverviewTab';
 import ProfileTab from './ProfileTab';
 import TasksTab from './TasksTab';
 import AttendanceTab from './AttendanceTab';
-import LeaveTab from './LeaveTab';
 import ProductionTab from './ProductionTab';
 import PerformanceTab from './PerformanceTab';
 import SalaryTab from './SalaryTab';
@@ -22,20 +21,26 @@ interface EmployeeDashboardProps {
 
 export default function EmployeeDashboard({ initialTab = 'dashboard' }: EmployeeDashboardProps) {
     const router = useRouter();
-    const [activeTab, setActiveTabState] = useState<EmployeeTab>(initialTab);
+    const effectiveInitialTab = initialTab === ('leave' as any) ? 'attendance' : initialTab;
+    const [activeTab, setActiveTabState] = useState<EmployeeTab>(effectiveInitialTab);
     const [collapsed, setCollapsed] = useState(false);
-
     const [mobileOpen, setMobileOpen] = useState(false);
 
     useEffect(() => {
         if (initialTab) {
-            setActiveTabState(initialTab);
+            if ((initialTab as string) === 'leave') {
+                setActiveTabState('attendance');
+                router.replace('/dashboard/employee/attendance', { scroll: false });
+            } else {
+                setActiveTabState(initialTab);
+            }
         }
-    }, [initialTab]);
+    }, [initialTab, router]);
 
     const setActiveTab = (tab: EmployeeTab) => {
-        setActiveTabState(tab);
-        const targetRoute = tab === 'dashboard' ? '/dashboard/employee' : `/dashboard/employee/${tab}`;
+        const targetTab = (tab as string) === 'leave' ? 'attendance' : tab;
+        setActiveTabState(targetTab);
+        const targetRoute = targetTab === 'dashboard' ? '/dashboard/employee' : `/dashboard/employee/${targetTab}`;
         router.push(targetRoute, { scroll: false });
     };
 
@@ -48,9 +53,8 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
             case 'tasks':
                 return <TasksTab />;
             case 'attendance':
+            case ('leave' as any):
                 return <AttendanceTab />;
-            case 'leave':
-                return <LeaveTab />;
             case 'production':
                 return <ProductionTab />;
             case 'performance':
@@ -67,7 +71,7 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
     };
 
     return (
-        <div className="flex min-h-screen bg-[#FAFAFC] font-sans antialiased text-slate-900 selection:bg-purple-500 selection:text-white">
+        <div className="flex min-h-screen bg-[#FAFAFC] dark:bg-[#090D16] font-sans antialiased text-slate-900 dark:text-slate-100 selection:bg-purple-500 selection:text-white transition-colors">
             {/* Employee Sidebar */}
             <Sidebar
                 activeTab={activeTab}

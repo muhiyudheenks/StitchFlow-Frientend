@@ -8,7 +8,8 @@ import {
     FiCalendar,
     FiBarChart2,
     FiFileText,
-    FiSettings
+    FiSettings,
+    FiHelpCircle,
 } from 'react-icons/fi';
 import { AdminTab } from '../types';
 
@@ -27,6 +28,7 @@ export const navItems: NavItem[] = [
     { id: 'production', label: 'Production', icon: FiCpu, badge: 'Live' },
     { id: 'inventory', label: 'Inventory', icon: FiBox },
     { id: 'attendance', label: 'Attendance', icon: FiCalendar },
+    { id: 'support', label: 'Support Tickets', icon: FiHelpCircle },
     { id: 'analytics', label: 'Analytics', icon: FiBarChart2 },
     { id: 'reports', label: 'Reports', icon: FiFileText },
     { id: 'settings', label: 'Settings', icon: FiSettings },

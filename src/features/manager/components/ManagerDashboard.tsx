@@ -11,6 +11,7 @@ import AttendanceTab from './AttendanceTab';
 import ProductionTab from './ProductionTab';
 import InventoryTab from './InventoryTab';
 import ReportsTab from './ReportsTab';
+import ManagerSupportTab from './ManagerSupportTab';
 import { ManagerTab } from '../types';
 import { FiX, FiCheckSquare } from 'react-icons/fi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -86,13 +87,15 @@ export default function ManagerDashboard({ initialTab = 'overview' }: ManagerDas
                 return <InventoryTab />;
             case 'reports':
                 return <ReportsTab />;
+            case 'support':
+                return <ManagerSupportTab />;
             default:
                 return <OverviewTab onNavigateTab={setActiveTab} onOpenQuickAction={handleOpenQuickAction} />;
         }
     };
 
     return (
-        <div className="flex min-h-screen bg-[#FAFAFC] font-sans antialiased text-slate-900 selection:bg-indigo-500 selection:text-white">
+        <div className="flex min-h-screen bg-[#FAFAFC] dark:bg-[#090D16] font-sans antialiased text-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white transition-colors">
             {/* Manager Sidebar */}
             <Sidebar
                 activeTab={activeTab}
@@ -118,44 +121,44 @@ export default function ManagerDashboard({ initialTab = 'overview' }: ManagerDas
 
             {/* Quick Task Modal */}
             {isQuickTaskOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-                    <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-2xl relative font-sans">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+                    <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-2xl relative font-sans max-h-[90vh] overflow-y-auto hide-scrollbar">
                         <button
                             onClick={() => setIsQuickTaskOpen(false)}
-                            className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                            className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         >
                             <FiX size={18} />
                         </button>
 
                         <div className="mb-5 flex items-center gap-3">
-                            <div className="p-2.5 rounded-2xl bg-indigo-100 text-indigo-700">
+                            <div className="p-2.5 rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">
                                 <FiCheckSquare size={20} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-extrabold text-slate-900">Dispatch Task</h3>
-                                <p className="text-xs text-slate-500">Quick task assignment for operator shift</p>
+                                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Dispatch Task</h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Quick task assignment for operator shift</p>
                             </div>
                         </div>
 
                         <form onSubmit={handleQuickTaskSubmit} className="space-y-4 text-xs">
                             <div>
-                                <label className="block font-bold text-slate-700 mb-1">Task Title *</label>
+                                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Task Title *</label>
                                 <input
                                     type="text"
                                     required
                                     placeholder="e.g. Inspect seam stitching on Batch #BT-9042"
                                     value={quickTitle}
                                     onChange={(e) => setQuickTitle(e.target.value)}
-                                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 outline-none focus:border-indigo-500 font-medium"
+                                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-indigo-500 font-medium"
                                 />
                             </div>
 
                             <div>
-                                <label className="block font-bold text-slate-700 mb-1">Priority</label>
+                                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Priority</label>
                                 <select
                                     value={quickPriority}
                                     onChange={(e: any) => setQuickPriority(e.target.value)}
-                                    className="w-full h-10 px-3 rounded-xl border border-slate-200 outline-none focus:border-indigo-500 font-medium"
+                                    className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 font-medium"
                                 >
                                     <option value="low">Low</option>
                                     <option value="medium">Medium</option>
@@ -164,18 +167,18 @@ export default function ManagerDashboard({ initialTab = 'overview' }: ManagerDas
                                 </select>
                             </div>
 
-                            <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+                            <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
                                 <button
                                     type="button"
                                     onClick={() => setIsQuickTaskOpen(false)}
-                                    className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={createTaskMutation.isPending}
-                                    className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-extrabold hover:bg-slate-800 shadow-md cursor-pointer disabled:opacity-60"
+                                    className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-indigo-600 text-white font-extrabold hover:bg-slate-800 dark:hover:bg-indigo-500 shadow-md cursor-pointer disabled:opacity-60"
                                 >
                                     {createTaskMutation.isPending ? 'Dispatching…' : 'Dispatch Now'}
                                 </button>
