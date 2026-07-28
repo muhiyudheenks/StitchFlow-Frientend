@@ -44,6 +44,10 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
     };
 
     const handleOpenQuickAction = (actionType: string) => {
+        if (actionType === 'Inventory' || actionType === 'Update Stock' || actionType === 'Manage Inventory') {
+            setActiveTab('inventory');
+            return;
+        }
         setQuickActionType(actionType);
         setIsQuickActionOpen(true);
     };
