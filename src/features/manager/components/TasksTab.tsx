@@ -319,7 +319,7 @@ export default function TasksTab() {
                                     <option value="">-- Select Employee --</option>
                                     {employees.map((emp: any) => (
                                         <option key={emp.id || emp._id} value={emp.id || emp._id}>
-                                            {emp.name || emp.fullName} ({emp.department || 'Production'})
+                                            {emp.name || emp.fullName} ({emp.employeeType ? emp.employeeType.replace(/_/g, ' ') : emp.department || 'Production'})
                                         </option>
                                     ))}
                                 </select>

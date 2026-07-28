@@ -155,14 +155,14 @@ export default function OverviewTab({ onOpenQuickAction, onNavigateTab }: Overvi
                     { label: 'Add Employee', action: 'Add Employee', icon: FiUsers, color: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/50 border-purple-100 dark:border-purple-900/50' },
                     { label: 'Add Manager', action: 'Add Manager', icon: FiUserCheck, color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 border-indigo-100 dark:border-indigo-900/50' },
                     { label: 'Create Production', action: 'Create Production', icon: FiCpu, color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-900/50' },
-                    { label: 'Update Stock', action: 'Update Stock', icon: FiBox, color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border-amber-100 dark:border-amber-900/50' },
+                    { label: 'Inventory', action: 'Inventory', icon: FiBox, color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border-amber-100 dark:border-amber-900/50', isTabNav: true },
                     { label: 'Generate Report', action: 'Generate Report', icon: FiActivity, color: 'text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-50 dark:bg-fuchsia-950/50 border-fuchsia-100 dark:border-fuchsia-900/50' }
                 ].map((item) => {
                     const Icon = item.icon;
                     return (
                         <button
                             key={item.label}
-                            onClick={() => onOpenQuickAction(item.action)}
+                            onClick={() => item.isTabNav ? onNavigateTab('inventory') : onOpenQuickAction(item.action)}
                             className="flex items-center gap-3 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-xs hover:shadow-md hover:border-purple-300 transition-all text-left group cursor-pointer"
                         >
                             <div className={`p-2.5 rounded-xl border ${item.color} group-hover:scale-105 transition-transform`}>

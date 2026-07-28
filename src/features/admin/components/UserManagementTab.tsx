@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/config';
 import { AxiosError } from 'axios';
@@ -21,12 +21,26 @@ import {
     FiRefreshCw
 } from 'react-icons/fi';
 
+import {
+    EMPLOYEE_DESIGNATIONS as EMPLOYEE_DESIGNATION_OPTIONS,
+    MANAGER_DESIGNATIONS as MANAGER_DESIGNATION_OPTIONS,
+} from '@/shared/constants/userSchema.constants';
+
 const addUserSchema = z.object({
     fullName: z.string().trim().min(2, 'Full name must be at least 2 characters.'),
     email: z.string().trim().min(1, 'Email is required.').email('Enter a valid email address.'),
-    role: z.enum(['employee', 'manager']),
-    department: z.string().optional(),
-    designation: z.string().optional(),
+    accountType: z.enum(['employee', 'manager']),
+    designation: z.string({ message: 'Designation is required' }).min(1, 'Designation is required'),
+}).refine((data) => {
+    if (data.accountType === 'employee') {
+        return (EMPLOYEE_DESIGNATION_OPTIONS as readonly string[]).includes(data.designation);
+    } else if (data.accountType === 'manager') {
+        return (MANAGER_DESIGNATION_OPTIONS as readonly string[]).includes(data.designation);
+    }
+    return false;
+}, {
+    message: 'Invalid designation for selected account type',
+    path: ['designation'],
 });
 
 type AddUserFormValues = z.infer<typeof addUserSchema>;
@@ -66,34 +80,71 @@ export default function UserManagementTab() {
         register,
         handleSubmit,
         reset,
+        watch,
+        setValue,
         formState: { errors },
     } = useForm<AddUserFormValues>({
         resolver: zodResolver(addUserSchema),
         defaultValues: {
             fullName: '',
             email: '',
-            role: 'employee',
-            department: 'Production',
-            designation: 'Line Operator',
+            accountType: 'employee',
+            designation: 'Stitching Worker',
         },
     });
 
-    // Create user mutation
+    const selectedAccountType = watch('accountType');
+
+    // Reset and update default designation whenever accountType changes
+    useEffect(() => {
+        if (selectedAccountType === 'employee') {
+            setValue('designation', 'Stitching Operator', { shouldValidate: true });
+        } else if (selectedAccountType === 'manager') {
+            setValue('designation', 'Production Manager', { shouldValidate: true });
+        }
+    }, [selectedAccountType, setValue]);
+
+    // Create user mutation targeting separate REST APIs without role payload
     const createUserMutation = useMutation<
         any,
         AxiosError<{ message?: string }>,
         AddUserFormValues
     >({
         mutationFn: async (data) => {
-            const response = await api.post('/api/admin/users/create', data);
-            return response.data;
+            if (data.accountType === 'manager') {
+                const response = await api.post('/api/admin/managers', {
+                    fullName: data.fullName,
+                    email: data.email,
+                    designation: data.designation,
+                });
+                return response.data;
+            } else {
+                let employeeType = 'stitching_worker';
+                if (data.designation === 'Finishing Worker') employeeType = 'finishing_worker';
+                if (data.designation === 'Cutting Worker') employeeType = 'cutting_worker';
+
+                const response = await api.post('/api/admin/employees', {
+                    fullName: data.fullName,
+                    email: data.email,
+                    designation: data.designation,
+                    employeeType,
+                });
+                return response.data;
+            }
         },
         onSuccess: (data) => {
             setSuccessMessage(data?.message || 'User created! Invitation email sent.');
             setServerError(null);
-            reset();
+            reset({
+                fullName: '',
+                email: '',
+                accountType: 'employee',
+                designation: 'Stitching Worker',
+            });
             setIsModalOpen(false);
             queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-employees'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-managers'] });
             setTimeout(() => setSuccessMessage(null), 5000);
         },
         onError: (err) => {
@@ -188,81 +239,78 @@ export default function UserManagementTab() {
                     ))}
                     <button
                         onClick={() => refetch()}
-                        className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors ml-auto sm:ml-2"
-                        title="Refresh user list"
+                        className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-500 transition-colors ml-1 cursor-pointer"
+                        title="Refresh List"
                     >
-                        <FiRefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+                        <FiRefreshCw size={14} />
                     </button>
                 </div>
             </div>
 
-            {/* Users Table */}
-            <div className="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden">
+            {/* Managed Users Table */}
+            <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden font-sans">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left text-xs min-w-[700px]">
                         <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                                <th className="py-4 px-6">User</th>
+                            <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-extrabold uppercase tracking-wider">
+                                <th className="py-4 px-6">User / Identity</th>
                                 <th className="py-4 px-6">Role</th>
                                 <th className="py-4 px-6">Department</th>
                                 <th className="py-4 px-6">Designation</th>
                                 <th className="py-4 px-6">Account Status</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-xs">
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-slate-400">
-                                        <div className="inline-flex items-center gap-2 font-semibold">
-                                            <span className="w-4 h-4 rounded-full border-2 border-purple-600 border-t-transparent animate-spin" />
-                                            <span>Loading user accounts...</span>
-                                        </div>
+                                    <td colSpan={5} className="py-12 text-center text-slate-400 font-semibold">
+                                        Loading managed accounts...
                                     </td>
                                 </tr>
                             ) : filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-slate-400">
-                                        No users found matching your criteria.
+                                    <td colSpan={5} className="py-12 text-center text-slate-400 font-semibold">
+                                        No users found matching your search.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredUsers.map((user) => (
-                                    <tr key={user.id} className="hover:bg-slate-50/60 transition-colors">
+                                    <tr key={user.id} className="hover:bg-purple-50/30 transition-colors">
                                         <td className="py-4 px-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-100 text-purple-700 font-extrabold text-xs">
-                                                    {user.fullName.slice(0, 2).toUpperCase()}
+                                                <div className="h-9 w-9 rounded-2xl bg-purple-100 text-purple-700 font-extrabold flex items-center justify-center text-sm shadow-xs">
+                                                    {user.fullName.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <div className="font-bold text-slate-900">{user.fullName}</div>
-                                                    <div className="text-[11px] text-slate-400 font-medium">{user.email}</div>
+                                                    <span className="font-extrabold text-slate-900 block">{user.fullName}</span>
+                                                    <span className="text-[11px] text-slate-400 font-medium">{user.email}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-4 px-6">
                                             <span
-                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-extrabold uppercase tracking-wider ${user.role === 'manager'
-                                                        ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                                                        : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold capitalize ${user.role === 'manager'
+                                                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                                        : 'bg-purple-50 text-purple-700 border border-purple-200'
                                                     }`}
                                             >
-                                                {user.role}
+                                                {user.role === 'manager' ? '👨‍💼 Manager' : '👤 Employee'}
                                             </span>
                                         </td>
                                         <td className="py-4 px-6 font-semibold text-slate-700">
-                                            {user.department || 'General'}
+                                            {user.department || 'Production'}
                                         </td>
                                         <td className="py-4 px-6 font-medium text-slate-600">
                                             {user.designation || 'Staff'}
                                         </td>
                                         <td className="py-4 px-6">
                                             {user.isVerified ? (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
-                                                    <FiCheckCircle size={12} /> Active &amp; Verified
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                                                    <FiCheckCircle size={12} /> Active (Verified)
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold">
-                                                    <FiClock size={12} /> Pending Password Setup
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-50 text-amber-600 border border-amber-200" title="Invitation sent, password setup pending">
+                                                    <FiClock size={12} /> Setup Pending
                                                 </span>
                                             )}
                                         </td>
@@ -274,34 +322,35 @@ export default function UserManagementTab() {
                 </div>
             </div>
 
-            {/* Add User Modal */}
+            {/* ADD USER MODAL */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-                    <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto hide-scrollbar">
-                        <button
-                            onClick={() => setIsModalOpen(false)}
-                            className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                        >
-                            <FiX size={18} />
-                        </button>
-
-                        <div className="mb-6">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 mb-3">
-                                <FiUserPlus size={20} />
+                    <div className="relative w-full max-w-md bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-2xl font-sans text-xs">
+                        <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg font-bold">
+                                    <FiUserPlus />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-extrabold text-slate-900">Provision User Account</h3>
+                                    <p className="text-xs text-slate-500">Send password setup invitation email</p>
+                                </div>
                             </div>
-                            <h2 className="text-xl font-extrabold text-slate-900">Add New User</h2>
-                            <p className="text-xs text-slate-500 mt-1">
-                                An invitation email will be sent to the user to set up their password.
-                            </p>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                            >
+                                <FiX size={18} />
+                            </button>
                         </div>
 
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                            {serverError && (
-                                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold">
-                                    {serverError}
-                                </div>
-                            )}
+                        {serverError && (
+                            <div className="mb-4 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 font-semibold">
+                                {serverError}
+                            </div>
+                        )}
 
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                             {/* Full Name */}
                             <div>
                                 <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">
@@ -340,10 +389,10 @@ export default function UserManagementTab() {
                                 )}
                             </div>
 
-                            {/* Role Selection */}
+                            {/* Account Type Selection */}
                             <div>
                                 <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">
-                                    Select Role *
+                                    Account Type *
                                 </label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <label className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:border-purple-400 cursor-pointer font-bold text-xs text-slate-700 has-[:checked]:border-purple-600 has-[:checked]:bg-purple-50 has-[:checked]:text-purple-700 transition-all">
@@ -351,49 +400,43 @@ export default function UserManagementTab() {
                                             type="radio"
                                             value="employee"
                                             className="accent-purple-600"
-                                            {...register('role')}
+                                            {...register('accountType')}
                                         />
-                                        <span>Employee</span>
+                                        <span>Employee Account</span>
                                     </label>
                                     <label className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:border-purple-400 cursor-pointer font-bold text-xs text-slate-700 has-[:checked]:border-purple-600 has-[:checked]:bg-purple-50 has-[:checked]:text-purple-700 transition-all">
                                         <input
                                             type="radio"
                                             value="manager"
                                             className="accent-purple-600"
-                                            {...register('role')}
+                                            {...register('accountType')}
                                         />
-                                        <span>Manager</span>
+                                        <span>Manager Account</span>
                                     </label>
                                 </div>
-                                {errors.role && (
-                                    <p className="text-rose-500 text-[11px] mt-1 font-medium">{errors.role.message}</p>
+                                {errors.accountType && (
+                                    <p className="text-rose-500 text-[11px] mt-1 font-medium">{errors.accountType.message}</p>
                                 )}
                             </div>
 
-                            {/* Department & Designation (Optional) */}
-                            <div className="grid grid-cols-2 gap-3 pt-1">
-                                <div>
-                                    <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">
-                                        Department
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Assembly"
-                                        className="w-full h-10 px-3 text-xs border border-slate-200 rounded-xl outline-none focus:border-purple-500 transition-all"
-                                        {...register('department')}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">
-                                        Designation
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Line Lead"
-                                        className="w-full h-10 px-3 text-xs border border-slate-200 rounded-xl outline-none focus:border-purple-500 transition-all"
-                                        {...register('designation')}
-                                    />
-                                </div>
+                            {/* Designation Dropdown */}
+                            <div>
+                                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">
+                                    Designation *
+                                </label>
+                                <select
+                                    className="w-full h-11 px-3.5 text-xs border border-slate-200 rounded-xl outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all font-bold text-slate-800 bg-white cursor-pointer"
+                                    {...register('designation')}
+                                >
+                                    {(selectedAccountType === 'manager' ? MANAGER_DESIGNATION_OPTIONS : EMPLOYEE_DESIGNATION_OPTIONS).map((opt) => (
+                                        <option key={opt} value={opt}>
+                                            {opt}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.designation && (
+                                    <p className="text-rose-500 text-[11px] mt-1 font-medium">{errors.designation.message}</p>
+                                )}
                             </div>
 
                             {/* Actions */}
@@ -412,11 +455,11 @@ export default function UserManagementTab() {
                                 >
                                     {createUserMutation.isPending ? (
                                         <>
-                                            <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block" />
-                                            <span>Sending Invitation…</span>
+                                            <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                                            <span>Creating...</span>
                                         </>
                                     ) : (
-                                        <span>Create &amp; Send Email</span>
+                                        <span>Create &amp; Invite</span>
                                     )}
                                 </button>
                             </div>

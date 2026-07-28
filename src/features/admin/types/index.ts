@@ -11,15 +11,26 @@ export type AdminTab =
     | 'settings'
     | 'support';
 
+export type EmployeeType =
+    | 'stitching_worker'
+    | 'finishing_worker'
+    | 'cutting_worker'
+    | 'quality_checker'
+    | 'packing_worker'
+    | 'iron_staff'
+    | 'helper'
+    | null;
+
 export interface Employee {
     id: string;
     name?: string;
     fullName?: string;
     avatar?: string;
     email: string;
+    role?: string;
+    employeeType?: EmployeeType;
     department?: string;
     designation?: string;
-    role?: string;
     status?: string;
     shift?: string;
     attendanceRate?: number;
@@ -47,6 +58,7 @@ export interface Manager {
     fullName?: string;
     avatar?: string;
     email: string;
+    employeeType?: null;
     department?: string;
     designation?: string;
     employeesCount?: number;
