@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/config';
 import { useProductionBatches, useProductionMutations } from '../hooks/useProduction';
+import { useManagers } from '../hooks/useManagers';
 import { ProductionBatchData, BatchTaskData, CreateBatchPayload } from '../services/production-service';
 import {
     FiCpu,
@@ -28,6 +29,13 @@ interface ProductionTabProps {
 export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps) {
     const { data: batches = [], isLoading: isLoadingBatches } = useProductionBatches();
     const { createBatch, updateBatch, createBatchTask, updateBatchTask, deleteBatchTask } = useProductionMutations();
+    const { data: managers = [], isLoading: isLoadingManagers, isError: isErrorManagers, error: managersError } = useManagers();
+
+    // Debug log managers length
+    React.useEffect(() => {
+        console.log('[ProductionTab] managers array length:', managers.length);
+        console.log('[ProductionTab] managers data:', managers);
+    }, [managers]);
 
     // Feedback notifications
     const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -41,18 +49,6 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
     const [selectedBatch, setSelectedBatch] = useState<ProductionBatchData | null>(null);
     const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<BatchTaskData | null>(null);
-
-    // Fetch Users list for dropdowns (Managers & Employees)
-    const { data: users = [] } = useQuery<any[]>({
-        queryKey: ['admin-users-all'],
-        queryFn: async () => {
-            const res = await api.get('/api/admin/users');
-            return res.data?.data || [];
-        },
-    });
-
-    const managers = users.filter((u) => u.role === 'manager');
-    const allEmployees = users.filter((u) => u.role === 'employee');
 
     // Selected workers state for Batch Creation/Editing
     const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
@@ -502,15 +498,26 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                                                 : editingBatch.manager
                                             : ''
                                     }
+                                    onChange={(e) => {
+                                        console.log('[CreateBatchModal] selected manager id:', e.target.value);
+                                    }}
                                     required
                                     className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-purple-500 cursor-pointer font-semibold text-slate-900 dark:text-slate-100"
                                 >
                                     <option value="">-- Select Manager --</option>
-                                    {managers.map((m: any) => (
-                                        <option key={m._id || m.id} value={m._id || m.id}>
-                                            {m.fullName || m.name} ({m.email})
-                                        </option>
-                                    ))}
+                                    {isLoadingManagers ? (
+                                        <option value="" disabled>Loading managers...</option>
+                                    ) : isErrorManagers ? (
+                                        <option value="" disabled>Error loading managers: {(managersError as any)?.response?.data?.message || (managersError as any)?.message || 'Failed to load managers'}</option>
+                                    ) : managers?.length === 0 ? (
+                                        <option value="" disabled>No managers available</option>
+                                    ) : (
+                                        managers?.map((m: any) => (
+                                            <option key={m._id || m.id} value={m._id || m.id}>
+                                                {m.name || m.fullName} ({m.email})
+                                            </option>
+                                        ))
+                                    )}
                                 </select>
                             </div>
 

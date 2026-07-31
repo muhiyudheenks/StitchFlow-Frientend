@@ -67,6 +67,10 @@ export const productionService = {
         const response = await api.patch(`/api/production/${id}/team`, data);
         return response.data?.data;
     },
+    deleteBatch: async (id: string) => {
+        const response = await api.delete(`/api/production/${id}`);
+        return response.data;
+    },
 
     // Task Assignment inside Batch
     getBatchTasks: async (batchId: string) => {

@@ -19,10 +19,10 @@ export interface ManagerNavItem {
 
 export const managerNavItems: ManagerNavItem[] = [
     { id: 'overview', label: 'Overview', icon: FiGrid },
-    { id: 'employees', label: 'Team Employees', icon: FiUsers, badge: '48' },
-    { id: 'tasks', label: 'Task Management', icon: FiCheckSquare, badge: '6' },
-    { id: 'attendance', label: 'Attendance & Leave', icon: FiClock, badge: '3' },
-    { id: 'production', label: 'Production Line', icon: FiCpu, badge: 'Live' },
+    { id: 'employees', label: 'Team Employees', icon: FiUsers },
+    { id: 'tasks', label: 'Task Management', icon: FiCheckSquare },
+    { id: 'attendance', label: 'Attendance & Leave', icon: FiClock },
+    { id: 'production', label: 'My Assigned Batches', icon: FiCpu },
     { id: 'inventory', label: 'Inventory (Read-Only)', icon: FiBox },
     { id: 'reports', label: 'Reports & Analytics', icon: FiFileText },
     { id: 'support', label: 'Help & Support', icon: FiHelpCircle },

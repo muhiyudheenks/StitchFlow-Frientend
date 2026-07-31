@@ -6,12 +6,10 @@ import api from '@/config';
 import {
     FiCheckSquare,
     FiCheckCircle,
-    FiClock,
-    FiAlertCircle,
     FiCalendar,
     FiX,
     FiPlay,
-    FiRefreshCw
+    FiCpu
 } from 'react-icons/fi';
 
 export default function TasksTab() {
@@ -88,11 +86,11 @@ export default function TasksTab() {
                 <div>
                     <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1">
                         <FiCheckSquare size={14} />
-                        <span>Workstation Tasks</span>
+                        <span>My Workstation Tasks</span>
                     </div>
                     <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">My Assigned Work Tasks</h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Log completed garment pieces, update task progress, and submit completed tasks for supervisor approval.
+                        View assigned batch operation tasks, log completed garment pieces, and submit work for manager review.
                     </p>
                 </div>
             </div>
@@ -117,21 +115,13 @@ export default function TasksTab() {
                             <div key={t.id || t._id} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4">
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <span
-                                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                                                t.priority === 'Urgent' || t.priority === 'urgent'
-                                                    ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
-                                                    : t.priority === 'High' || t.priority === 'high'
-                                                    ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-                                                    : 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
-                                            }`}
-                                        >
-                                            {t.priority || 'Medium'}
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 flex items-center gap-1">
+                                            <FiCpu size={12} /> {t.batchName || 'Batch'}
                                         </span>
 
                                         <span
-                                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${
-                                                t.status === 'Completed'
+                                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold capitalize ${
+                                                t.status === 'Completed' || t.status === 'Verified'
                                                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200'
                                                     : t.status === 'Under Review'
                                                     ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200'
@@ -144,19 +134,30 @@ export default function TasksTab() {
                                         </span>
                                     </div>
 
-                                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white leading-snug">
-                                        {t.taskName || t.operationName || t.title}
-                                    </h3>
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                                {t.workerType || t.operationType || 'Stitching'} Worker
+                                            </span>
+                                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                                                Priority: {t.priority || 'Medium'}
+                                            </span>
+                                        </div>
+                                        <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-snug">
+                                            {t.taskName || t.operationName || t.title}
+                                        </h3>
+                                    </div>
+
                                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                                        {t.description || t.instructions || 'No special instructions.'}
+                                        {t.description || 'No special instructions provided.'}
                                     </p>
 
                                     <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-400 font-medium pt-2 border-t border-slate-100 dark:border-slate-800">
                                         <span className="flex items-center gap-1 font-mono text-[11px]">
-                                            <FiCalendar size={13} /> {t.dueDate || 'N/A'}
+                                            <FiCalendar size={13} /> Due: {t.dueDate || 'N/A'}
                                         </span>
                                         <span className="font-bold text-slate-800 dark:text-slate-200">
-                                            {completedQty} / {targetQty} pcs ({progressPct}%)
+                                            Target: {targetQty} pcs ({completedQty} Done)
                                         </span>
                                     </div>
 
@@ -171,7 +172,7 @@ export default function TasksTab() {
                                             max={targetQty}
                                             step="1"
                                             value={completedQty}
-                                            disabled={t.status === 'Completed' || t.status === 'Under Review'}
+                                            disabled={t.status === 'Completed' || t.status === 'Verified' || t.status === 'Under Review'}
                                             onChange={(e) => handleQuantityChange(t.id || t._id, targetQty, completedQty, Number(e.target.value))}
                                             className="w-full accent-purple-600 cursor-pointer disabled:opacity-50"
                                         />
@@ -183,20 +184,20 @@ export default function TasksTab() {
                                         onClick={() => setSelectedTask(t)}
                                         className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer transition-colors"
                                     >
-                                        View Details
+                                        View Specs
                                     </button>
 
                                     {t.status === 'Pending' ? (
                                         <button
                                             onClick={() => handleStartTask(t.id || t._id)}
-                                            className="px-3 py-1.5 rounded-xl bg-purple-600 text-white hover:bg-purple-700 font-extrabold text-xs flex items-center gap-1 cursor-pointer shadow-sm transition-colors"
+                                            className="px-3.5 py-1.5 rounded-xl bg-purple-600 text-white hover:bg-purple-700 font-extrabold text-xs flex items-center gap-1 cursor-pointer shadow-sm transition-colors"
                                         >
                                             <FiPlay size={14} /> Start Task
                                         </button>
                                     ) : t.status === 'In Progress' ? (
                                         <button
                                             onClick={() => handleMarkComplete(t.id || t._id)}
-                                            className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 font-extrabold text-xs flex items-center gap-1 cursor-pointer shadow-sm transition-colors"
+                                            className="px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 font-extrabold text-xs flex items-center gap-1 cursor-pointer shadow-sm transition-colors"
                                         >
                                             <FiCheckCircle size={14} /> Submit for Review
                                         </button>
@@ -225,16 +226,31 @@ export default function TasksTab() {
 
                         <div className="mb-4">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
-                                Task Details
+                                Task Specifications
                             </span>
                             <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mt-2">
                                 {selectedTask.taskName || selectedTask.operationName || selectedTask.title}
                             </h3>
                         </div>
 
-                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 mb-6">
-                            {selectedTask.description || selectedTask.instructions || 'No detailed instructions provided.'}
-                        </p>
+                        <div className="space-y-3 text-xs mb-6">
+                            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                                <span className="text-[10px] font-bold text-slate-400 block uppercase">Batch Name</span>
+                                <div className="font-extrabold text-purple-600">{selectedTask.batchName || 'Production Batch'}</div>
+                            </div>
+
+                            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                                <span className="text-[10px] font-bold text-slate-400 block uppercase">Worker Role</span>
+                                <div className="font-extrabold">{selectedTask.workerType || 'Stitching'} Worker</div>
+                            </div>
+
+                            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                                <span className="text-[10px] font-bold text-slate-400 block uppercase">Instructions</span>
+                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                                    {selectedTask.description || 'No detailed instructions provided.'}
+                                </p>
+                            </div>
+                        </div>
 
                         <div className="flex justify-end">
                             <button

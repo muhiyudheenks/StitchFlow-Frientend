@@ -70,16 +70,10 @@ export default function OverviewTab({ onNavigateTab, onOpenQuickAction }: Overvi
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => onOpenQuickAction('Create Task')}
-                        className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-extrabold text-xs shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
-                    >
-                        + Assign Task
-                    </button>
-                    <button
                         onClick={() => onNavigateTab('production')}
                         className="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-extrabold text-xs border border-white/20 transition-all cursor-pointer"
                     >
-                        New Batch
+                        My Assigned Batches
                     </button>
                 </div>
             </div>

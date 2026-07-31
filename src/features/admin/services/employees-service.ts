@@ -1,5 +1,5 @@
 import api from "@/config";
-import { EmployeesResponse } from "../types";
+import { employeesResponse } from "../types";
 
 export interface GetEmployeesParams {
     search?: string;
@@ -9,8 +9,8 @@ export interface GetEmployeesParams {
     limit?: number;
 }
 
-export const getEmployees = async (params?: GetEmployeesParams): Promise<EmployeesResponse> => {
-    const { data } = await api.get<EmployeesResponse>("/api/admin/employees", {
+export const getEmployees = async (params?: GetEmployeesParams): Promise<employeesResponse> => {
+    const { data } = await api.get<employeesResponse>("/api/admin/employees", {
         params,
     });
     return data;

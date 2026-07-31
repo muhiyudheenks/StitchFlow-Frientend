@@ -17,20 +17,15 @@ import {
     FiActivity
 } from 'react-icons/fi';
 
+import { OverviewCardsData } from '../types';
+
 interface OverviewTabProps {
     onOpenQuickAction: (actionType: string) => void;
     onNavigateTab: (tab: any) => void;
+    overviewData?: OverviewCardsData;
 }
 
-export default function OverviewTab({ onOpenQuickAction, onNavigateTab }: OverviewTabProps) {
-    // 1. Fetch Overview Metrics
-    const { data: overview } = useQuery({
-        queryKey: ['admin-overview-metrics'],
-        queryFn: async () => {
-            const response = await api.get('/api/admin/dashboard/overview');
-            return response.data?.data || {};
-        },
-    });
+export default function OverviewTab({ onOpenQuickAction, onNavigateTab, overviewData }: OverviewTabProps) {
 
     // 2. Fetch Production Lines
     const { data: productionLines = [] } = useQuery({
@@ -50,12 +45,12 @@ export default function OverviewTab({ onOpenQuickAction, onNavigateTab }: Overvi
         },
     });
 
-    const totalEmployees = overview?.totalEmployees ?? 0;
-    const totalManagers = overview?.totalManagers ?? 0;
-    const todayAttendanceCount = overview?.todayAttendanceCount ?? 0;
-    const todayAttendanceRate = overview?.todayAttendanceRate ?? 0;
-    const productionProgress = overview?.productionProgress ?? 0;
-    const lowStockItemCount = overview?.lowStockItemCount ?? 0;
+    const totalEmployees = overviewData?.totalEmployees ?? 0;
+    const totalManagers = overviewData?.totalManagers ?? 0;
+    const todayAttendanceCount = overviewData?.todayAttendanceCount ?? 0;
+    const todayAttendanceRate = overviewData?.todayAttendanceRate ?? 0;
+    const productionProgress = overviewData?.productionProgress ?? 0;
+    const lowStockItemCount = overviewData?.lowStockItemCount ?? 0;
 
     const dynamicKpis = [
         {

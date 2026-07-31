@@ -11,6 +11,15 @@ export type AdminTab =
     | 'settings'
     | 'support';
 
+export interface OverviewCardsData {
+    totalEmployees: number;
+    totalManagers: number;
+    todayAttendanceCount: number;
+    todayAttendanceRate: number;
+    productionProgress: number;
+    lowStockItemCount: number;
+}
+
 export type EmployeeType =
     | 'stitching_worker'
     | 'finishing_worker'
@@ -39,7 +48,7 @@ export interface Employee {
     createdAt?: string;
 }
 
-export interface EmployeesResponse {
+export interface employeesResponse {
     success: boolean;
     message: string;
     employees?: Employee[];

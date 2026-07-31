@@ -62,7 +62,7 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
             case 'salary':
                 return <SalaryTab />;
             case 'notifications':
-                return <NotificationsTab />;
+                return <NotificationsTab onNavigateTab={setActiveTab} />;
             case 'support':
                 return <SupportTab />;
             default:

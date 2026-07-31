@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { navItems } from '../constants';
-import { AdminTab } from '../types';
+import { AdminTab, OverviewCardsData } from '../types';
+import { NavItem } from '../constants';
 import { FiLayers, FiChevronLeft, FiChevronRight, FiLogOut, FiX } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import LogoutModal from '@/shared/components/LogoutModal';
@@ -17,6 +18,7 @@ interface SidebarProps {
     setCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
     mobileOpen?: boolean;
     setMobileOpen?: (open: boolean) => void;
+    overviewData?: OverviewCardsData;
 }
 
 export default function Sidebar({
@@ -26,13 +28,13 @@ export default function Sidebar({
     setCollapsed,
     mobileOpen = false,
     setMobileOpen,
+    overviewData,
 }: SidebarProps) {
     const router = useRouter();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
     const reduxUser = useAppSelector((state) => state.auth.user);
     const [localUser, setLocalUser] = useState<{ fullName?: string; email?: string } | null>(null);
-
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const raw = localStorage.getItem('user');
@@ -45,6 +47,7 @@ export default function Sidebar({
             }
         }
     }, []);
+    console.log("users1", localUser)
 
     const user = reduxUser || localUser;
     const adminName = user?.fullName || 'Admin User';
@@ -72,10 +75,10 @@ export default function Sidebar({
             )}
 
             <aside
-                className={`flex flex-col justify-between bg-[#0F1424] text-slate-300 border-r border-slate-800/80 transition-all duration-300 z-50 font-sans ${collapsed ? 'md:w-20' : 'md:w-64'
+                className={`flex flex-col justify-between bg-[#0F1424] text-slate-300 border-r border-slate-800/80 transition-all duration-300 font-sans shrink-0 ${collapsed ? 'md:w-20' : 'md:w-64'
                     } ${mobileOpen
-                        ? 'fixed inset-y-0 left-0 w-64 shadow-2xl'
-                        : 'hidden md:flex'
+                        ? 'fixed inset-y-0 left-0 w-64 shadow-2xl z-50'
+                        : 'hidden md:flex md:sticky md:top-0 md:h-screen md:z-30'
                     }`}
             >
                 {/* Ambient subtle glow */}
@@ -129,13 +132,26 @@ export default function Sidebar({
                         {navItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = activeTab === item.id;
+
+                            const getBadgeValue = (): string | undefined => {
+                                if (item.id === 'employees' && overviewData?.totalEmployees !== undefined) {
+                                    return String(overviewData.totalEmployees);
+                                }
+                                if (item.id === 'managers' && overviewData?.totalManagers !== undefined) {
+                                    return String(overviewData.totalManagers);
+                                }
+                                return item.badge;
+                            };
+
+                            const badgeValue = getBadgeValue();
+
                             return (
                                 <button
                                     key={item.id}
                                     onClick={() => handleSelectTab(item.id)}
                                     className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group relative cursor-pointer ${isActive
-                                            ? 'bg-purple-600/15 text-purple-300 border border-purple-500/30 shadow-sm'
-                                            : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-transparent'
+                                        ? 'bg-purple-600/15 text-purple-300 border border-purple-500/30 shadow-sm'
+                                        : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-transparent'
                                         }`}
                                 >
                                     <div className="flex items-center gap-3.5 min-w-0">
@@ -151,14 +167,14 @@ export default function Sidebar({
                                         )}
                                     </div>
 
-                                    {(!collapsed || mobileOpen) && item.badge && (
+                                    {(!collapsed || mobileOpen) && badgeValue && (
                                         <span
                                             className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${isActive
-                                                    ? 'bg-purple-500/20 text-purple-300 border-purple-400/30'
-                                                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                                                ? 'bg-purple-500/20 text-purple-300 border-purple-400/30'
+                                                : 'bg-slate-800 text-slate-400 border-slate-700'
                                                 }`}
                                         >
-                                            {item.badge}
+                                            {badgeValue}
                                         </span>
                                     )}
 
@@ -187,7 +203,7 @@ export default function Sidebar({
                                         {adminName}
                                     </span>
                                     <span className="text-[10px] text-slate-400 truncate">
-                                        Super Admin
+                                        Admin
                                     </span>
                                 </div>
                             </div>

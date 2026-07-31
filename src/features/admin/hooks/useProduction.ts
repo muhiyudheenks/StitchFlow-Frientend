@@ -53,10 +53,15 @@ export function useProductionMutations() {
         onSuccess: invalidateAll,
     });
 
+    const deleteBatch = useMutation({
+        mutationFn: (id: string) => productionService.deleteBatch(id),
+        onSuccess: invalidateAll,
+    });
+
     const deleteBatchTask = useMutation({
         mutationFn: (taskId: string) => productionService.deleteBatchTask(taskId),
         onSuccess: invalidateAll,
     });
 
-    return { createBatch, updateBatch, updateBatchTeam, createBatchTask, updateBatchTask, deleteBatchTask };
+    return { createBatch, updateBatch, updateBatchTeam, deleteBatch, createBatchTask, updateBatchTask, deleteBatchTask };
 }

@@ -72,10 +72,10 @@ export default function Sidebar({
             )}
 
             <aside
-                className={`flex flex-col justify-between bg-[#0F1424] text-slate-300 border-r border-slate-800/80 transition-all duration-300 z-50 font-sans ${collapsed ? 'md:w-20' : 'md:w-64'
+                className={`flex flex-col justify-between bg-[#0F1424] text-slate-300 border-r border-slate-800/80 transition-all duration-300 font-sans shrink-0 ${collapsed ? 'md:w-20' : 'md:w-64'
                     } ${mobileOpen
-                        ? 'fixed inset-y-0 left-0 w-64 shadow-2xl'
-                        : 'hidden md:flex'
+                        ? 'fixed inset-y-0 left-0 w-64 shadow-2xl z-50'
+                        : 'hidden md:flex md:sticky md:top-0 md:h-screen md:z-30'
                     }`}
             >
                 {/* Ambient background glow */}

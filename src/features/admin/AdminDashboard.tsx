@@ -17,6 +17,7 @@ import ReportsTab from './components/ReportsTab';
 import SettingsTab from './components/SettingsTab';
 import QuickActionModal from './components/QuickActionModal';
 import { AdminTab } from './types';
+import { useOverviewCards } from './hooks/useOverviewCards';
 
 interface AdminDashboardProps {
     initialTab?: AdminTab;
@@ -30,6 +31,9 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
     const [quickActionType, setQuickActionType] = useState('Add Employee');
 
     const [mobileOpen, setMobileOpen] = useState(false);
+
+    // Single overview data fetch using TanStack Query
+    const { data: overviewData } = useOverviewCards();
 
     useEffect(() => {
         if (initialTab) {
@@ -59,6 +63,7 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
                     <OverviewTab
                         onOpenQuickAction={handleOpenQuickAction}
                         onNavigateTab={setActiveTab}
+                        overviewData={overviewData}
                     />
                 );
             case 'users':
@@ -86,6 +91,7 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
                     <OverviewTab
                         onOpenQuickAction={handleOpenQuickAction}
                         onNavigateTab={setActiveTab}
+                        overviewData={overviewData}
                     />
                 );
         }
@@ -101,6 +107,7 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
                 setCollapsed={setCollapsed}
                 mobileOpen={mobileOpen}
                 setMobileOpen={setMobileOpen}
+                overviewData={overviewData}
             />
 
             {/* Main Content Area */}

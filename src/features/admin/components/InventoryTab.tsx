@@ -293,7 +293,7 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                 <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl p-5 shadow-xs">
                     <span className="text-[11px] font-extrabold text-purple-600 dark:text-purple-400 uppercase tracking-wider block mb-1">Inventory Value</span>
                     <div className="text-2xl font-extrabold text-purple-700 dark:text-purple-300 font-mono">
-                        ${summary?.inventoryValue ? summary.inventoryValue.toLocaleString() : '0.00'}
+                        ₹{summary?.inventoryValue ? summary.inventoryValue.toLocaleString() : '0.00'}
                     </div>
                     <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-1 block">Valuation Total</span>
                 </div>
@@ -314,11 +314,10 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                         <button
                             key={t.key}
                             onClick={() => setActiveSubTab(t.key as any)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all whitespace-nowrap cursor-pointer ${
-                                isActive
-                                    ? 'bg-slate-900 dark:bg-purple-600 text-white shadow-md'
-                                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all whitespace-nowrap cursor-pointer ${isActive
+                                ? 'bg-slate-900 dark:bg-purple-600 text-white shadow-md'
+                                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                }`}
                         >
                             <Icon size={14} />
                             <span>{t.label}</span>
@@ -498,11 +497,10 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                                 </td>
                                                 <td className="py-4 px-6 font-medium text-slate-600 dark:text-slate-400">{item.warehouseLocation}</td>
                                                 <td className="py-4 px-6">
-                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${
-                                                        item.status === 'In Stock' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 border-emerald-200 dark:border-emerald-900/50' :
+                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${item.status === 'In Stock' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 border-emerald-200 dark:border-emerald-900/50' :
                                                         item.status === 'Low Stock' ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 border-amber-200 dark:border-amber-900/50' :
-                                                        'bg-rose-50 dark:bg-rose-950/50 text-rose-600 border-rose-200 dark:border-rose-900/50 animate-pulse'
-                                                    }`}>
+                                                            'bg-rose-50 dark:bg-rose-950/50 text-rose-600 border-rose-200 dark:border-rose-900/50 animate-pulse'
+                                                        }`}>
                                                         {item.status === 'Low Stock' && <FiAlertTriangle size={12} />}
                                                         {item.status}
                                                     </span>
@@ -649,11 +647,10 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                                 </td>
                                                 <td className="py-4 px-6 font-medium text-slate-600 dark:text-slate-400">{item.warehouse}</td>
                                                 <td className="py-4 px-6">
-                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${
-                                                        item.status === 'In Stock' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 border-emerald-200 dark:border-emerald-900/50' :
+                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${item.status === 'In Stock' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 border-emerald-200 dark:border-emerald-900/50' :
                                                         item.status === 'Low Stock' ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 border-amber-200 dark:border-amber-900/50' :
-                                                        'bg-rose-50 dark:bg-rose-950/50 text-rose-600 border-rose-200 dark:border-rose-900/50 animate-pulse'
-                                                    }`}>
+                                                            'bg-rose-50 dark:bg-rose-950/50 text-rose-600 border-rose-200 dark:border-rose-900/50 animate-pulse'
+                                                        }`}>
                                                         {item.status}
                                                     </span>
                                                 </td>
@@ -804,11 +801,10 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                                 </td>
                                                 <td className="py-4 px-6 font-medium text-slate-600 dark:text-slate-400">{item.warehouse}</td>
                                                 <td className="py-4 px-6">
-                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${
-                                                        item.status === 'Ready' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 border-emerald-200 dark:border-emerald-900/50' :
+                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${item.status === 'Ready' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 border-emerald-200 dark:border-emerald-900/50' :
                                                         item.status === 'Reserved' ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 border-amber-200 dark:border-amber-900/50' :
-                                                        'bg-purple-50 dark:bg-purple-950/50 text-purple-600 border-purple-200 dark:border-purple-900/50'
-                                                    }`}>
+                                                            'bg-purple-50 dark:bg-purple-950/50 text-purple-600 border-purple-200 dark:border-purple-900/50'
+                                                        }`}>
                                                         {item.status}
                                                     </span>
                                                 </td>
@@ -907,12 +903,11 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                                 </span>
                                             </td>
                                             <td className="py-4 px-6">
-                                                <span className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-bold border ${
-                                                    tx.movementType === 'Purchase' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200' :
+                                                <span className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-bold border ${tx.movementType === 'Purchase' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200' :
                                                     tx.movementType === 'Production' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200' :
-                                                    tx.movementType === 'Return' ? 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200' :
-                                                    'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200'
-                                                }`}>
+                                                        tx.movementType === 'Return' ? 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200' :
+                                                            'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200'
+                                                    }`}>
                                                     {tx.movementType}
                                                 </span>
                                             </td>
@@ -1062,7 +1057,7 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block font-bold mb-1">Unit Cost ($) *</label>
+                                    <label className="block font-bold mb-1">Unit Cost (₹) *</label>
                                     <input
                                         type="number"
                                         step="0.01"

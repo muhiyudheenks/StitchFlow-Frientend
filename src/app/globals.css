@@ -80,3 +80,19 @@ button {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Global scrollbar hiding */
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: none;
+}
+
+/* IE & Edge */
+* {
+  -ms-overflow-style: none;
+}

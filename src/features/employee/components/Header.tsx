@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/config';
 import { EmployeeTab } from '../types';
 import {
     FiSearch,
@@ -64,6 +66,18 @@ export default function Header({ activeTab, onNavigateTab, onToggleMobileMenu }:
         ? userName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
         : 'EU';
 
+    // Fetch notifications to compute unread badge count
+    const { data: notifications = [] } = useQuery<any[]>({
+        queryKey: ['employee-notifications'],
+        queryFn: async () => {
+            const response = await api.get('/api/employee/notifications');
+            return response.data?.data || [];
+        },
+        refetchInterval: 10000,
+    });
+
+    const unreadCount = notifications.filter((n) => !n.isRead && !n.read).length;
+
     return (
         <>
             <header className="sticky top-0 z-20 flex flex-row items-center justify-between gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 py-4 md:px-10 font-sans transition-colors">
@@ -91,16 +105,6 @@ export default function Header({ activeTab, onNavigateTab, onToggleMobileMenu }:
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                    {/* Search Bar */}
-                    <div className="relative hidden sm:block w-48 md:w-60">
-                        <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm" />
-                        <input
-                            type="text"
-                            placeholder="Search employee workstation..."
-                            className="w-full h-9 pl-9 pr-4 text-xs bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-purple-500 transition-all text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium"
-                        />
-                    </div>
-
                     {/* Shift Badge */}
                     <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-xs font-bold border border-purple-200 dark:border-purple-900/50">
                         <FiClock size={13} className="text-purple-500 dark:text-purple-400" />
@@ -117,7 +121,11 @@ export default function Header({ activeTab, onNavigateTab, onToggleMobileMenu }:
                         aria-label="Notifications"
                     >
                         <FiBell size={16} />
-                        <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-purple-600 animate-pulse" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-white text-[9px] font-extrabold shadow-sm animate-pulse">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
                     </button>
 
                     {/* Date Badge */}
@@ -130,41 +138,45 @@ export default function Header({ activeTab, onNavigateTab, onToggleMobileMenu }:
                     <div className="relative">
                         <button
                             onClick={() => setProfileOpen(!profileOpen)}
-                            className="flex items-center gap-2.5 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                            className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                         >
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-extrabold text-xs shadow-sm">
+                            <div className="h-8 w-8 rounded-xl bg-purple-600 text-white font-extrabold text-xs flex items-center justify-center shadow-sm">
                                 {initials}
                             </div>
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 hidden lg:block">
-                                {userName}
-                            </span>
-                            <FiChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
+                            <div className="hidden md:flex flex-col text-left">
+                                <span className="text-xs font-extrabold text-slate-900 dark:text-white leading-tight">
+                                    {userName}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-semibold leading-tight">
+                                    Assembly Operator
+                                </span>
+                            </div>
+                            <FiChevronDown size={14} className="text-slate-400 hidden md:block" />
                         </button>
 
                         {profileOpen && (
-                            <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-xl text-xs z-50">
-                                <div className="p-3 border-b border-slate-100 dark:border-slate-800 mb-1">
-                                    <p className="font-bold text-slate-900 dark:text-white">{userName}</p>
-                                    <p className="text-[11px] text-slate-400 dark:text-slate-500">{userEmail}</p>
+                            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-2 z-50 text-xs">
+                                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                                    <p className="font-extrabold text-slate-900 dark:text-white">{userName}</p>
+                                    <p className="text-[11px] text-slate-400 font-medium truncate">{userEmail}</p>
                                 </div>
                                 <button
                                     onClick={() => {
                                         setProfileOpen(false);
                                         onNavigateTab('profile');
                                     }}
-                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium cursor-pointer"
+                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold transition-colors cursor-pointer"
                                 >
-                                    <FiUser size={14} /> My Profile
+                                    <FiUser size={14} /> My Account Profile
                                 </button>
-                                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
                                 <button
                                     onClick={() => {
                                         setProfileOpen(false);
                                         setIsLogoutModalOpen(true);
                                     }}
-                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-bold cursor-pointer"
+                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold transition-colors cursor-pointer border-t border-slate-100 dark:border-slate-800"
                                 >
-                                    <FiLogOut size={14} /> Sign Out
+                                    <FiLogOut size={14} /> Logout
                                 </button>
                             </div>
                         )}

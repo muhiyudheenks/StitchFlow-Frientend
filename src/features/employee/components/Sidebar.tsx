@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/config';
 import { employeeNavItems } from '../constants';
 import { EmployeeTab } from '../types';
 import { FiLayers, FiChevronLeft, FiChevronRight, FiLogOut, FiUserCheck, FiX } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import LogoutModal from '@/shared/components/LogoutModal';
 import { useAppSelector } from '@/store/hooks';
-import { useEffect } from 'react';
 
 interface SidebarProps {
     activeTab: EmployeeTab;
@@ -52,13 +53,27 @@ export default function Sidebar({
         ? userName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
         : 'EU';
 
+    // Fetch notifications to compute unread badge count
+    const { data: notifications = [] } = useQuery<any[]>({
+        queryKey: ['employee-notifications'],
+        queryFn: async () => {
+            const response = await api.get('/api/employee/notifications');
+            return response.data?.data || [];
+        },
+        refetchInterval: 10000,
+    });
+
+    const unreadCount = notifications.filter((n) => !n.isRead && !n.read).length;
+
     const handleLogout = () => {
         setIsLogoutModalOpen(true);
     };
 
     const handleSelectTab = (tab: EmployeeTab) => {
         setActiveTab(tab);
-        if (setMobileOpen) setMobileOpen(false);
+        if (setMobileOpen) {
+            setMobileOpen(false);
+        }
     };
 
     return (
@@ -72,10 +87,10 @@ export default function Sidebar({
             )}
 
             <aside
-                className={`flex flex-col justify-between bg-[#0F1424] text-slate-300 border-r border-slate-800/80 transition-all duration-300 z-50 font-sans ${collapsed ? 'md:w-20' : 'md:w-64'
+                className={`flex flex-col justify-between bg-[#0F1424] text-slate-300 border-r border-slate-800/80 transition-all duration-300 font-sans shrink-0 ${collapsed ? 'md:w-20' : 'md:w-64'
                     } ${mobileOpen
-                        ? 'fixed inset-y-0 left-0 w-64 shadow-2xl'
-                        : 'hidden md:flex'
+                        ? 'fixed inset-y-0 left-0 w-64 shadow-2xl z-50'
+                        : 'hidden md:flex md:sticky md:top-0 md:h-screen md:z-30'
                     }`}
             >
                 {/* Ambient background glow */}
@@ -132,6 +147,10 @@ export default function Sidebar({
                         {employeeNavItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = activeTab === item.id;
+                            const badgeVal = item.id === 'notifications'
+                                ? (unreadCount > 0 ? String(unreadCount) : undefined)
+                                : item.badge;
+
                             return (
                                 <button
                                     key={item.id}
@@ -154,14 +173,14 @@ export default function Sidebar({
                                         )}
                                     </div>
 
-                                    {(!collapsed || mobileOpen) && item.badge && (
+                                    {(!collapsed || mobileOpen) && badgeVal && (
                                         <span
                                             className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${isActive
                                                     ? 'bg-purple-500/20 text-purple-300 border-purple-400/30'
                                                     : 'bg-slate-800 text-slate-400 border-slate-700'
                                                 }`}
                                         >
-                                            {item.badge}
+                                            {badgeVal}
                                         </span>
                                     )}
 
@@ -169,6 +188,7 @@ export default function Sidebar({
                                         <motion.div
                                             layoutId="employeeSidebarActiveIndicator"
                                             className="absolute left-0 top-2 bottom-2 w-1 bg-purple-500 rounded-r-full"
+                                            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                                         />
                                     )}
                                 </button>
@@ -177,47 +197,42 @@ export default function Sidebar({
                     </nav>
                 </div>
 
-                {/* Footer / User Profile & Logout */}
-                <div className="p-3 border-t border-slate-800/80">
-                    {(!collapsed || mobileOpen) ? (
-                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-extrabold text-xs shadow-md">
-                                    {initials}
-                                </div>
-                                <div className="min-w-0 flex flex-col">
-                                    <span className="text-xs font-bold text-slate-100 truncate">
+                {/* Footer User Profile Card */}
+                <div className="p-3 border-t border-slate-800/80 bg-slate-900/40">
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white font-extrabold text-xs shadow-md">
+                                {initials}
+                            </div>
+                            {(!collapsed || mobileOpen) && (
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-xs font-extrabold text-white truncate leading-tight">
                                         {userName}
                                     </span>
-                                    <span className="text-[10px] text-purple-400 truncate font-semibold">
-                                        Line Operator
+                                    <span className="text-[10px] text-purple-400 font-mono font-semibold truncate leading-tight mt-0.5">
+                                        Assembly Operator
                                     </span>
                                 </div>
-                            </div>
+                            )}
+                        </div>
+
+                        {(!collapsed || mobileOpen) && (
                             <button
                                 onClick={handleLogout}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                                title="Sign Out"
+                                className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                title="Logout"
                             >
                                 <FiLogOut size={16} />
                             </button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center justify-center p-3 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                            title="Sign Out"
-                        >
-                            <FiLogOut size={19} />
-                        </button>
-                    )}
+                        )}
+                    </div>
                 </div>
-
-                <LogoutModal
-                    isOpen={isLogoutModalOpen}
-                    onClose={() => setIsLogoutModalOpen(false)}
-                />
             </aside>
+
+            <LogoutModal
+                isOpen={isLogoutModalOpen}
+                onClose={() => setIsLogoutModalOpen(false)}
+            />
         </>
     );
 }
