@@ -75,6 +75,14 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
         setCreateBatchModalOpen(true);
     };
 
+    const { data: garmentProducts = [] } = useQuery<any[]>({
+        queryKey: ['active-garment-products'],
+        queryFn: async () => {
+            const res = await api.get('/api/garment-products/active');
+            return res.data?.data || [];
+        },
+    });
+
     // Owner Save Batch (Send exact batchName, managerId, employeeIds, finishingWorkerIds, notes)
     const handleSaveBatch = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -88,9 +96,16 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
             return;
         }
 
-        const payload: CreateBatchPayload = {
+        const productName = (formData.get('productName') as string) || '';
+        if (!productName) {
+            setFormErrorMessage('Please select a Garment Product');
+            return;
+        }
+
+        const payload: any = {
             batchName: (formData.get('batchName') as string) || nextBatchName,
             managerId,
+            productName,
             notes: formData.get('notes') as string,
             status: 'PENDING_MANAGER',
         };
@@ -294,7 +309,15 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                                         }}
                                         className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white font-extrabold text-xs shadow-md hover:bg-purple-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                                     >
-                                        <FiList size={14} /> Open Tasks ({batch.totalTasks ?? (batch.tasks?.length || 0)})
+                                        {(() => {
+                                            const allT = batch.tasks || [];
+                                            const activeT = allT.filter((t: any) => {
+                                                const s = (t.status || '').toLowerCase();
+                                                return s !== 'completed' && s !== 'verified';
+                                            });
+                                            const openCount = batch.pendingTasks ?? (allT.length > 0 ? activeT.length : 0);
+                                            return <><FiList size={14} /> Open Tasks ({openCount})</>;
+                                        })()}
                                     </button>
 
                                     <button
@@ -358,93 +381,133 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                             <p className="text-xs text-slate-400">Click &quot;Assign New Task&quot; above to delegate garment operations to stitching or finishing workers.</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs min-w-[800px]">
-                                <thead>
-                                    <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-wider">
-                                        <th className="py-4 px-6">Operation / Garment</th>
-                                        <th className="py-4 px-6">Assigned Worker</th>
-                                        <th className="py-4 px-6">Worker Type</th>
-                                        <th className="py-4 px-6">Quantity</th>
-                                        <th className="py-4 px-6">Duration &amp; Due Date</th>
-                                        <th className="py-4 px-6">Priority</th>
-                                        <th className="py-4 px-6">Status</th>
-                                        <th className="py-4 px-6 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                                    {selectedBatch.tasks.map((task: BatchTaskData) => (
-                                        <tr key={task.id || task._id} className="hover:bg-purple-50/30 dark:hover:bg-purple-950/20 transition-colors">
-                                            <td className="py-4 px-6">
-                                                <span className="font-extrabold text-slate-900 dark:text-white block">{task.operationName}</span>
-                                                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold block">{task.garmentProduct}</span>
-                                            </td>
-                                            <td className="py-4 px-6 font-bold text-slate-800 dark:text-slate-200">
-                                                {task.assignedToName || (task.assignedTo as any)?.fullName || 'Unassigned'}
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${
-                                                    task.taskType === 'Finishing' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 border-indigo-200' :
-                                                    'bg-purple-50 dark:bg-purple-950/50 text-purple-600 border-purple-200'
-                                                }`}>
-                                                    {task.taskType || 'Stitching'}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6 font-mono font-extrabold">
-                                                {task.completedQuantity || 0} / {task.quantity} Pcs
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="font-semibold block">{task.estimatedDuration || '4 hrs'}</span>
-                                                <span className="text-[10px] text-slate-400 font-mono block">
-                                                    Due: {task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : 'N/A'}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                    task.priority === 'Urgent' ? 'text-rose-600 font-extrabold' :
-                                                    task.priority === 'High' ? 'text-amber-600' : 'text-slate-600'
-                                                }`}>
-                                                    {task.priority}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${
-                                                    task.status === 'Completed' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 border-emerald-200' :
-                                                    task.status === 'In Progress' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 border-indigo-200' :
-                                                    'bg-slate-100 dark:bg-slate-800 text-slate-600 border-slate-200'
-                                                }`}>
-                                                    {task.status}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditingTask(task);
-                                                            setCreateTaskModalOpen(true);
-                                                        }}
-                                                        className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                                    >
-                                                        <FiEdit3 size={15} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            const taskId = task.id || task._id;
-                                                            if (taskId && confirm('Delete this task assignment?')) {
-                                                                deleteBatchTask.mutate(taskId);
-                                                            }
-                                                        }}
-                                                        className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                                    >
-                                                        <FiTrash2 size={15} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        (() => {
+                            const allTasks = selectedBatch.tasks || [];
+                            const activeTasks = allTasks.filter((t: any) => {
+                                const s = (t.status || '').toLowerCase();
+                                return s !== 'completed' && s !== 'verified';
+                            });
+                            const completedTasks = allTasks.filter((t: any) => {
+                                const s = (t.status || '').toLowerCase();
+                                return s === 'completed' || s === 'verified';
+                            });
+
+                            const renderAdminTaskTable = (taskList: BatchTaskData[], isCompleted = false) => (
+                                <div className="overflow-x-auto border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+                                    <table className="w-full text-left text-xs min-w-[800px]">
+                                        <thead>
+                                            <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-wider">
+                                                <th className="py-4 px-6">Operation / Garment</th>
+                                                <th className="py-4 px-6">Assigned Worker</th>
+                                                <th className="py-4 px-6">Worker Type</th>
+                                                <th className="py-4 px-6">Quantity</th>
+                                                <th className="py-4 px-6">Duration &amp; Due Date</th>
+                                                <th className="py-4 px-6">Priority</th>
+                                                <th className="py-4 px-6">Status</th>
+                                                <th className="py-4 px-6 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                                            {taskList.map((task: BatchTaskData) => (
+                                                <tr key={task.id || task._id} className={isCompleted ? 'bg-slate-50/40 dark:bg-slate-800/30' : 'hover:bg-purple-50/30 dark:hover:bg-purple-950/20 transition-colors'}>
+                                                    <td className="py-4 px-6">
+                                                        <span className="font-extrabold text-slate-900 dark:text-white block">{task.operationName}</span>
+                                                        <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold block">{task.garmentProduct}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6 font-bold text-slate-800 dark:text-slate-200">
+                                                        {task.assignedToName || (task.assignedTo as any)?.fullName || 'Unassigned'}
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                                                            task.taskType === 'Finishing' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 border-indigo-200' :
+                                                            'bg-purple-50 dark:bg-purple-950/50 text-purple-600 border-purple-200'
+                                                        }`}>
+                                                            {task.taskType || 'Stitching'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6 font-mono font-extrabold">
+                                                        {task.completedQuantity || 0} / {task.quantity} Pcs
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="font-semibold block">{task.estimatedDuration || '4 hrs'}</span>
+                                                        <span className="text-[10px] text-slate-400 font-mono block">
+                                                            Due: {task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : 'N/A'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                                            task.priority === 'Urgent' ? 'text-rose-600 font-extrabold' :
+                                                            task.priority === 'High' ? 'text-amber-600' : 'text-slate-600'
+                                                        }`}>
+                                                            {task.priority}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${
+                                                            task.status === 'Completed' || task.status === 'Verified'
+                                                                ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 border-emerald-200'
+                                                                : task.status === 'In Progress'
+                                                                ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 border-indigo-200'
+                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 border-slate-200'
+                                                        }`}>
+                                                            {task.status === 'Verified' || task.status === 'Completed' ? '✓ Verified / Approved' : task.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setEditingTask(task);
+                                                                    setCreateTaskModalOpen(true);
+                                                                }}
+                                                                className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                            >
+                                                                <FiEdit3 size={15} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const taskId = task.id || task._id;
+                                                                    if (taskId && confirm('Delete this task assignment?')) {
+                                                                        deleteBatchTask.mutate(taskId);
+                                                                    }
+                                                                }}
+                                                                className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                            >
+                                                                <FiTrash2 size={15} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            );
+
+                            return (
+                                <div className="space-y-6">
+                                    <div className="space-y-3">
+                                        <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                            <FiList className="text-purple-600" /> Active / Open Tasks ({activeTasks.length})
+                                        </h4>
+                                        {activeTasks.length === 0 ? (
+                                            <p className="text-xs text-slate-400 py-4 font-semibold">No open/active tasks pending for this batch.</p>
+                                        ) : (
+                                            renderAdminTaskTable(activeTasks, false)
+                                        )}
+                                    </div>
+
+                                    {completedTasks.length > 0 && (
+                                        <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                            <h4 className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                                                <FiCheckCircle className="text-emerald-600" /> Completed &amp; Verified Tasks ({completedTasks.length})
+                                            </h4>
+                                            {renderAdminTaskTable(completedTasks, true)}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()
                     )}
                 </div>
             )}
@@ -485,6 +548,29 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                                     required
                                     className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-purple-500 font-mono font-bold text-slate-900 dark:text-slate-100"
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Garment Product * (Permanent Batch Garment)</label>
+                                {garmentProducts.length === 0 ? (
+                                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 text-amber-700 dark:text-amber-300 text-xs font-semibold">
+                                        No garment products found. Please add items in Admin Garment Products catalog or Finished Garments inventory.
+                                    </div>
+                                ) : (
+                                    <select
+                                        name="productName"
+                                        defaultValue={editingBatch?.productName || editingBatch?.garmentName || ''}
+                                        required
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-purple-500 cursor-pointer font-bold text-slate-900 dark:text-slate-100"
+                                    >
+                                        <option value="">-- Select Garment Product --</option>
+                                        {garmentProducts.map((p: any) => (
+                                            <option key={p._id || p.id} value={p.productName}>
+                                                {p.productName} ({p.productCode} - {p.category})
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
 
                             <div>

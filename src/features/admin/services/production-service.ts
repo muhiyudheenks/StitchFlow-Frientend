@@ -27,7 +27,7 @@ export interface BatchTaskData {
     dueDate?: string;
     estimatedDuration?: string;
     priority: 'Low' | 'Medium' | 'High' | 'Urgent';
-    status: 'Pending' | 'In Progress' | 'Quality Check' | 'Completed';
+    status: 'Pending' | 'In Progress' | 'Quality Check' | 'Completed' | 'Verified' | string;
     instructions?: string;
 }
 
@@ -35,6 +35,8 @@ export interface ProductionBatchData {
     _id?: string;
     id?: string;
     batchName: string;
+    productName?: string;
+    garmentName?: string;
     manager: string | any;
     managerName?: string;
     employees?: any[];
@@ -46,6 +48,7 @@ export interface ProductionBatchData {
     tasks?: BatchTaskData[];
     totalTasks?: number;
     completedTasks?: number;
+    pendingTasks?: number;
     progressPercentage?: number;
     createdAt?: string;
 }

@@ -9,6 +9,7 @@ import UserManagementTab from './components/UserManagementTab';
 import EmployeesTab from './components/EmployeesTab';
 import ManagersTab from './components/ManagersTab';
 import ProductionTab from './components/ProductionTab';
+import GarmentProductsTab from './components/GarmentProductsTab';
 import InventoryTab from './components/InventoryTab';
 import AttendanceTab from './components/AttendanceTab';
 import SupportTicketsTab from './components/SupportTicketsTab';
@@ -74,6 +75,8 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
                 return <ManagersTab onOpenQuickAction={handleOpenQuickAction} />;
             case 'production':
                 return <ProductionTab onOpenQuickAction={handleOpenQuickAction} />;
+            case 'garment-products':
+                return <GarmentProductsTab />;
             case 'inventory':
                 return <InventoryTab onOpenQuickAction={handleOpenQuickAction} />;
             case 'attendance':

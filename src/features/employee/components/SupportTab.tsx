@@ -229,19 +229,19 @@ export default function SupportTab() {
                             {manager?.fullName ? manager.fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : 'LM'}
                         </div>
                         <div className="space-y-1 min-w-0">
-                            <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate">{manager?.fullName || 'Robert Vance'}</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{manager?.designation || 'Senior Line Supervisor'}</p>
+                            <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate">{manager?.fullName || 'Production Manager'}</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{manager?.designation || 'Line Manager'}</p>
                             <div className="text-[11px] text-slate-400 dark:text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 font-mono">
-                                <span>ID: {manager?.employeeId || 'EMP-MGR-001'}</span>
+                                <span>ID: {manager?.employeeId || 'EMP-MGR'}</span>
                                 <span>•</span>
-                                <span>{manager?.department || 'Garment Line A'}</span>
+                                <span>{manager?.department || 'Production'}</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                         <a
-                            href={`mailto:${manager?.email || 'manager@stitchflow.ai'}`}
+                            href={`mailto:${manager?.email || 'manager@stitchflow.com'}`}
                             className="flex-1 py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"
                         >
                             <FiMail size={14} /> <span>Contact Manager</span>

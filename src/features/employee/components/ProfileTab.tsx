@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/config';
 import {
@@ -17,15 +17,33 @@ import {
     FiCheckCircle
 } from 'react-icons/fi';
 
+import { useAppSelector } from '@/store/hooks';
+
 export default function ProfileTab() {
     const queryClient = useQueryClient();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
+    const reduxUser = useAppSelector((state: any) => state.auth?.user);
+    const [localUser, setLocalUser] = useState<{ fullName?: string; email?: string; department?: string; designation?: string; _id?: string } | null>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const raw = localStorage.getItem('user');
+            if (raw) {
+                try {
+                    setLocalUser(JSON.parse(raw));
+                } catch (e) {}
+            }
+        }
+    }, []);
+
+    const currentUser = reduxUser || localUser;
+
     // Profile state
     const [phone, setPhone] = useState('+1 (555) 234-5678');
     const [address, setAddress] = useState('742 Evergreen Terrace, Springfield, IL');
-    const [emergencyContact, setEmergencyContact] = useState('Sarah Vance (+1 555-998-1122)');
+    const [emergencyContact, setEmergencyContact] = useState('Emergency Contact (+1 555-000-1122)');
 
     // Password modal state
     const [oldPassword, setOldPassword] = useState('');
@@ -41,16 +59,18 @@ export default function ProfileTab() {
         },
     });
 
-    const prof = dashboardData?.profile || {
-        id: 'EMP-8042',
-        fullName: 'Alexander Vance',
-        email: 'alexander@stitchflow.ai',
-        role: 'Employee',
-        department: 'Assembly Line A',
-        designation: 'Senior Line Operator',
-        shift: 'Shift A (Morning)',
-        joiningDate: '15 Jan 2024',
-        reportingManager: 'Robert Vance (Line Manager)',
+    const prof = {
+        id: dashboardData?.profile?.id || currentUser?._id || 'EMP-8042',
+        fullName: dashboardData?.profile?.fullName && dashboardData.profile.fullName !== 'Employee'
+            ? dashboardData.profile.fullName
+            : currentUser?.fullName || 'Employee User',
+        email: dashboardData?.profile?.email || currentUser?.email || 'employee@stitchflow.com',
+        role: dashboardData?.profile?.role || (currentUser as any)?.role || 'Employee',
+        department: dashboardData?.profile?.department || (currentUser as any)?.department || 'Production',
+        designation: dashboardData?.profile?.designation || (currentUser as any)?.designation || 'Production Operator',
+        shift: dashboardData?.profile?.shift || 'Shift A (Morning)',
+        joiningDate: dashboardData?.profile?.joiningDate || 'N/A',
+        reportingManager: dashboardData?.myManager?.fullName || dashboardData?.profile?.reportingManager || 'Production Manager',
         phone: phone,
         address: address,
         emergencyContact: emergencyContact,

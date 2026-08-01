@@ -29,7 +29,7 @@ export default function WhyChoose() {
 
             <div className="mx-auto max-w-7xl px-6 md:px-12 relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-                    
+
                     {/* Left Column: Heading, Description & Benefits */}
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
@@ -156,6 +156,6 @@ export default function WhyChoose() {
                     </motion.div>
                 </div>
             </div>
-        </section>
+        </section >
     );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/config';
 import {
@@ -18,13 +19,17 @@ import {
     FiThumbsDown,
     FiCheck,
     FiSearch,
-    FiSquare,
-    FiCheckSquare as FiCheckSquareIcon
+    FiCalendar,
+    FiUser,
+    FiClock,
+    FiInbox,
+    FiArrowRight,
 } from 'react-icons/fi';
 
 type WorkerType = 'Cutting' | 'Stitching' | 'Finishing';
 
 export default function ProductionTab() {
+    const router = useRouter();
     const queryClient = useQueryClient();
     const [selectedBatch, setSelectedBatch] = useState<any | null>(null);
 
@@ -42,7 +47,17 @@ export default function ProductionTab() {
     const [targetQuantity, setTargetQuantity] = useState(100);
     const [priority, setPriority] = useState<'Low' | 'Medium' | 'High' | 'Urgent'>('Medium');
     const [dueDate, setDueDate] = useState('');
+    const [garmentProduct, setGarmentProduct] = useState('');
     const [description, setDescription] = useState('');
+
+    // Fetch Active Garment Products for dropdown
+    const { data: activeProducts = [] } = useQuery<any[]>({
+        queryKey: ['active-garment-products'],
+        queryFn: async () => {
+            const res = await api.get('/api/garment-products/active');
+            return res.data?.data || [];
+        },
+    });
 
     // Feedback messages
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -53,11 +68,11 @@ export default function ProductionTab() {
         setTimeout(() => setToastMessage(null), 4000);
     };
 
-    // 1. Fetch Batches assigned to Manager
+    // 1. Fetch Batches assigned ONLY to Logged-in Manager
     const { data: batches = [], isLoading } = useQuery<any[]>({
-        queryKey: ['production-batches'],
+        queryKey: ['manager-assigned-batches'],
         queryFn: async () => {
-            const response = await api.get('/api/production');
+            const response = await api.get('/api/manager/batches');
             return response.data?.data || [];
         },
     });
@@ -178,35 +193,40 @@ export default function ProductionTab() {
 
     const createTaskMutation = useMutation({
         mutationFn: async (payload: any) => {
-            const response = await api.post('/api/tasks', payload);
+            const response = await api.post(`/api/manager/batches/${payload.batchId}/tasks`, payload);
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['production-batches'] });
+            queryClient.invalidateQueries({ queryKey: ['manager-assigned-batches'] });
             queryClient.invalidateQueries({ queryKey: ['batch-tasks'] });
             queryClient.invalidateQueries({ queryKey: ['managerTasks'] });
             setIsAssignTaskModalOpen(false);
             setTaskName('');
-            setTaskEmployeeId('');
             setDescription('');
             setDueDate('');
             setErrorMessage(null);
-            showToast('Task assigned successfully!');
+            showToast('Batch task dispatched to all allocated workers successfully!');
         },
         onError: (err: any) => {
-            setErrorMessage(err.response?.data?.message || err.message || 'Failed to assign task');
+            setErrorMessage(err.response?.data?.message || err.message || 'Failed to dispatch task');
         },
     });
 
     const verifyTaskMutation = useMutation({
-        mutationFn: async ({ taskId, status }: { taskId: string; status: 'Completed' | 'Rejected' }) => {
+        mutationFn: async ({ taskId, status }: { taskId: string; status: 'Verified' | 'Completed' | 'Rejected' }) => {
             const response = await api.patch(`/api/tasks/${taskId}/verify`, { status });
             return response.data;
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['production-batches'] });
+            queryClient.invalidateQueries({ queryKey: ['manager-assigned-batches'] });
             queryClient.invalidateQueries({ queryKey: ['batch-tasks'] });
-            showToast(`Task ${variables.status === 'Completed' ? 'Approved' : 'Rejected'}`);
+            queryClient.invalidateQueries({ queryKey: ['managerTasks'] });
+            queryClient.invalidateQueries({ queryKey: ['all-batch-tasks'] });
+            showToast(`Task ${variables.status === 'Rejected' ? 'Rejected' : 'Approved & Verified'}`);
+        },
+        onError: (err: any) => {
+            setErrorMessage(err.response?.data?.message || err.message || 'Failed to verify task');
         },
     });
 
@@ -290,109 +310,144 @@ export default function ProductionTab() {
                 </div>
             </div>
 
-            {/* Batches Overview Table */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                <th className="py-4 px-6">Batch Name</th>
-                                <th className="py-4 px-6">Product Garment</th>
-                                <th className="py-4 px-6">Task Statistics</th>
-                                <th className="py-4 px-6">Batch Progress</th>
-                                <th className="py-4 px-6">Members</th>
-                                <th className="py-4 px-6">Status</th>
-                                <th className="py-4 px-6 text-right">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300">
-                            {isLoading ? (
-                                <tr>
-                                    <td colSpan={7} className="py-12 text-center text-slate-400 font-semibold">
-                                        Loading production batches from database...
-                                    </td>
-                                </tr>
-                            ) : batches.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="py-12 text-center text-slate-400 font-semibold">
-                                        No production batches have been assigned to you yet.
-                                    </td>
-                                </tr>
-                            ) : (
-                                batches.map((b) => {
-                                    const batchId = b.id || b._id;
-                                    const progress = b.progressPercentage || 0;
-                                    const membersList = Array.isArray(b.members) ? b.members : [];
-
-                                    return (
-                                        <tr key={batchId} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
-                                            <td className="py-4 px-6 font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400">
-                                                    <FiLayers size={15} />
-                                                </div>
-                                                <div>
-                                                    <span>{b.batchName}</span>
-                                                    <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 block">{b.batchNumber || b.batchCode || 'BATCH'}</span>
-                                                </div>
-                                            </td>
-
-                                            <td className="py-4 px-6 text-slate-800 dark:text-slate-200 font-bold">
-                                                {b.productName || 'Denim Apparel'}
-                                            </td>
-
-                                            <td className="py-4 px-6 text-slate-700 dark:text-slate-300 font-semibold">
-                                                <div className="flex items-center gap-2 text-xs">
-                                                    <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{b.completedTasks || 0} Done</span>
-                                                    <span>/</span>
-                                                    <span>{b.totalTasks || 0} Total</span>
-                                                </div>
-                                            </td>
-
-                                            <td className="py-4 px-6">
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center justify-between text-[11px]">
-                                                        <span className="font-bold">{progress}% Completed</span>
-                                                    </div>
-                                                    <div className="h-1.5 w-28 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-purple-600 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }} />
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            <td className="py-4 px-6">
-                                                <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
-                                                    {membersList.length} Allocated Workers
-                                                </span>
-                                            </td>
-
-                                            <td className="py-4 px-6">
-                                                <span
-                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${
-                                                        b.status === 'COMPLETED' || b.status === 'Completed'
-                                                            ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200'
-                                                            : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200'
-                                                    }`}
-                                                >
-                                                    {b.status || 'Active'}
-                                                </span>
-                                            </td>
-
-                                            <td className="py-4 px-6 text-right">
-                                                <button
-                                                    onClick={() => setSelectedBatch(b)}
-                                                    className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs cursor-pointer transition-colors"
-                                                >
-                                                    Open Batch Details
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
+            {/* Assigned Batches Cards Grid / Empty State */}
+            {isLoading ? (
+                <div className="py-16 text-center text-xs font-bold text-slate-400 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl">
+                    <div className="h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                    Loading assigned production batches...
                 </div>
-            </div>
+            ) : batches.length === 0 ? (
+                /* EMPTY STATE */
+                <div className="p-12 sm:p-16 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs text-center space-y-5 animate-fadeIn">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-950 dark:to-purple-950 text-indigo-600 dark:text-indigo-400 mx-auto shadow-inner">
+                        <FiInbox size={38} />
+                    </div>
+                    <div className="space-y-2 max-w-md mx-auto">
+                        <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
+                            No Production Batches Assigned
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            You currently have no production batches assigned to your account. Production batches are created and assigned to Production Managers by the Administrator.
+                        </p>
+                    </div>
+                    <div className="pt-2">
+                        <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 font-extrabold text-xs">
+                            <FiUser size={16} />
+                            <span>Contact Administrator</span>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                /* ASSIGNED BATCH CARDS GRID */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {batches.map((b) => {
+                        const batchId = b.id || b._id;
+                        const progress = b.progress || b.progressPercentage || 0;
+                        const membersCount = b.totalMembers || (Array.isArray(b.members) ? b.members.length : 0);
+                        const managerName = b.manager?.fullName || b.managerName || 'Self';
+                        const garment = b.garmentName || b.productName || 'Garment';
+                        const dueDateFormatted = b.dueDate
+                            ? new Date(b.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                            : 'N/A';
+
+                        return (
+                            <div
+                                key={batchId}
+                                className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-5 group"
+                            >
+                                <div className="space-y-4">
+                                    {/* Header & Status Badge */}
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">
+                                                {b.batchNumber || b.batchCode || 'BATCH'} • {garment}
+                                            </span>
+                                            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mt-0.5">
+                                                {b.batchName}
+                                            </h3>
+                                        </div>
+                                        <span
+                                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${
+                                                b.status === 'COMPLETED' || b.status === 'Completed'
+                                                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200'
+                                                    : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200'
+                                            }`}
+                                        >
+                                            {b.status || 'Active'}
+                                        </span>
+                                    </div>
+
+                                    {/* Progress Bar */}
+                                    <div className="space-y-1.5 pt-1">
+                                        <div className="flex items-center justify-between text-xs font-extrabold">
+                                            <span className="text-slate-600 dark:text-slate-400">Progress</span>
+                                            <span className="text-indigo-600 dark:text-indigo-400">{progress}%</span>
+                                        </div>
+                                        <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                                                style={{ width: `${Math.min(progress, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Details Grid */}
+                                    <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
+                                        <div className="space-y-0.5">
+                                            <span className="text-[10px] text-slate-400 font-bold uppercase block">Manager</span>
+                                            <div className="font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate">
+                                                <FiUser className="text-indigo-500 shrink-0" size={13} />
+                                                <span className="truncate">{managerName}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-0.5">
+                                            <span className="text-[10px] text-slate-400 font-bold uppercase block">Members Count</span>
+                                            <div className="font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                                <FiUsers className="text-indigo-500 shrink-0" size={13} />
+                                                <span>{membersCount} Employees</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-0.5">
+                                            <span className="text-[10px] text-slate-400 font-bold uppercase block">Completed Tasks</span>
+                                            <div className="font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                                <FiCheckCircle size={13} />
+                                                <span>{b.completedTasks || 0} Done</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-0.5">
+                                            <span className="text-[10px] text-slate-400 font-bold uppercase block">Pending Tasks</span>
+                                            <div className="font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                                <FiClock size={13} />
+                                                <span>{b.pendingTasks || 0} Pending</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Due Date */}
+                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <FiCalendar className="text-indigo-500" size={14} />
+                                        <span>Due Date: <strong className="text-slate-800 dark:text-slate-200">{dueDateFormatted}</strong></span>
+                                    </div>
+                                </div>
+
+                                {/* Open Tasks Button */}
+                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <button
+                                        onClick={() => router.push(`/dashboard/manager/batches/${batchId}`)}
+                                        className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
+                                    >
+                                        <span>Open Tasks</span>
+                                        <FiArrowRight size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* DEDICATED BATCH DETAILS VIEW MODAL */}
             {activeBatch && (
@@ -623,17 +678,17 @@ export default function ProductionTab() {
                                                         </span>
                                                     </td>
                                                     <td className="py-3 px-4 text-right">
-                                                        {(t.status === 'Under Review' || t.status === 'Completed') && activeBatch.status !== 'Completed' && (
+                                                        {(t.status === 'Under Review' || t.status === 'under_review' || (t.status === 'Completed' && !t.verifiedByManager)) && activeBatch.status !== 'Completed' && (
                                                             <div className="flex items-center justify-end gap-1.5">
                                                                 <button
-                                                                    onClick={() => verifyTaskMutation.mutate({ taskId: t.id || t._id, status: 'Completed' })}
-                                                                    className="px-2 py-1 rounded-lg bg-emerald-600 text-white font-extrabold text-[10px] flex items-center gap-1 cursor-pointer"
+                                                                    onClick={() => verifyTaskMutation.mutate({ taskId: t.id || t._id, status: 'Verified' })}
+                                                                    className="px-2 py-1 rounded-lg bg-emerald-600 text-white font-extrabold text-[10px] flex items-center gap-1 cursor-pointer hover:bg-emerald-700 transition-colors"
                                                                 >
                                                                     <FiThumbsUp size={11} /> Approve
                                                                 </button>
                                                                 <button
                                                                     onClick={() => verifyTaskMutation.mutate({ taskId: t.id || t._id, status: 'Rejected' })}
-                                                                    className="px-2 py-1 rounded-lg bg-rose-600 text-white font-extrabold text-[10px] flex items-center gap-1 cursor-pointer"
+                                                                    className="px-2 py-1 rounded-lg bg-rose-600 text-white font-extrabold text-[10px] flex items-center gap-1 cursor-pointer hover:bg-rose-700 transition-colors"
                                                                 >
                                                                     <FiThumbsDown size={11} /> Reject
                                                                 </button>
@@ -706,7 +761,7 @@ export default function ProductionTab() {
                                     onClick={handleSelectAllFiltered}
                                     className="text-purple-600 dark:text-purple-400 font-bold hover:underline cursor-pointer flex items-center gap-1.5 text-xs"
                                 >
-                                    <FiCheckSquareIcon size={14} />
+                                    <FiCheckSquare size={14} />
                                     <span>
                                         {filteredAvailableList.every((e: any) => selectedEmployeeIds.includes(e.id || e._id))
                                             ? 'Deselect All Filtered'
@@ -831,145 +886,128 @@ export default function ProductionTab() {
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 setErrorMessage(null);
-                                if (!taskEmployeeId) {
-                                    setErrorMessage('Please select a batch worker');
+                                if (!activeBatch) return;
+
+                                if (!garmentProduct) {
+                                    setErrorMessage('Please select a Garment Product');
                                     return;
                                 }
-                                if (!taskName.trim()) {
-                                    setErrorMessage('Task operation name is required');
-                                    return;
-                                }
+
                                 createTaskMutation.mutate({
                                     batchId: activeBatch.id || activeBatch._id,
-                                    assignedEmployee: taskEmployeeId,
-                                    workerType: taskWorkerType,
-                                    taskName: taskName.trim(),
+                                    productName: garmentProduct,
+                                    taskName: taskName.trim() || undefined,
                                     targetQuantity: Number(targetQuantity || 100),
-                                    priority,
-                                    dueDate,
+                                    dueDate: dueDate || undefined,
                                     description: description.trim(),
                                 });
                             }}
                             className="space-y-4 text-xs"
                         >
-                            {/* Worker Type */}
+                            {/* Production Batch */}
                             <div>
-                                <label className="block font-bold mb-1">Worker Type *</label>
-                                <select
-                                    value={taskWorkerType}
-                                    onChange={(e) => {
-                                        setTaskWorkerType(e.target.value as WorkerType);
-                                        setTaskEmployeeId('');
-                                    }}
-                                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 font-bold outline-none cursor-pointer"
-                                >
-                                    <option value="Cutting">▼ Cutting</option>
-                                    <option value="Stitching">▼ Stitching</option>
-                                    <option value="Finishing">▼ Finishing</option>
-                                </select>
+                                <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Production Batch *</label>
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={`${activeBatch.batchName} (${activeBatch.batchNumber || 'BATCH'})`}
+                                    className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold outline-none cursor-not-allowed"
+                                />
                             </div>
 
-                            {/* Employee Dropdown filtered by Worker Type */}
+                            {/* Garment Product */}
                             <div>
-                                <label className="block font-bold mb-1">Employee ({taskWorkerType} Members in Batch) *</label>
-                                {taskEligibleMembers.length === 0 ? (
-                                    <div className="p-3 rounded-xl bg-amber-50 text-amber-700 text-xs font-semibold">
-                                        No {taskWorkerType.toLowerCase()} workers added to this batch yet. Add a {taskWorkerType.toLowerCase()} worker to the batch first.
+                                <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Garment Product *</label>
+                                {activeProducts.length === 0 ? (
+                                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 text-amber-700 dark:text-amber-300 text-xs font-semibold">
+                                        No active garment products found. Please ask Admin to add Garment Products.
                                     </div>
                                 ) : (
                                     <select
-                                        value={taskEmployeeId}
-                                        onChange={(e) => setTaskEmployeeId(e.target.value)}
                                         required
-                                        className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 font-bold outline-none cursor-pointer"
+                                        value={garmentProduct}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setGarmentProduct(val);
+                                            const found = activeProducts.find((p: any) => p.productName === val);
+                                            if (found?.defaultTargetQuantity) {
+                                                setTargetQuantity(found.defaultTargetQuantity);
+                                            }
+                                        }}
+                                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold outline-none focus:border-indigo-500 cursor-pointer"
                                     >
-                                        <option value="">-- Select {taskWorkerType} Worker --</option>
-                                        {taskEligibleMembers.map((emp: any) => (
-                                            <option key={emp.id || emp._id} value={emp.id || emp._id}>
-                                                {emp.name || emp.fullName} ({emp.designation || emp.department})
+                                        <option value="">-- Select Garment Product --</option>
+                                        {activeProducts.map((p: any) => (
+                                            <option key={p._id || p.id} value={p.productName}>
+                                                {p.productName} ({p.productCode} - {p.category})
                                             </option>
                                         ))}
                                     </select>
                                 )}
                             </div>
 
-                            {/* Operation Name */}
+                            {/* Task Name */}
                             <div>
-                                <label className="block font-bold mb-1">Operation Task Name *</label>
+                                <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Task Name / Operation (Optional)</label>
                                 <input
                                     type="text"
-                                    required
-                                    placeholder="e.g. Stitch Side Seam"
+                                    placeholder="Auto-generated if left blank (e.g. Denim Shirt Production)"
                                     value={taskName}
                                     onChange={(e) => setTaskName(e.target.value)}
-                                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 font-bold outline-none"
+                                    className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium outline-none focus:border-indigo-500"
                                 />
                             </div>
 
-                            {/* Target Quantity */}
-                            <div>
-                                <label className="block font-bold mb-1">Target Quantity * (Pieces)</label>
-                                <input
-                                    type="number"
-                                    required
-                                    min={1}
-                                    value={targetQuantity}
-                                    onChange={(e) => setTargetQuantity(Number(e.target.value))}
-                                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 font-bold outline-none"
-                                />
-                            </div>
-
-                            {/* Priority & Due Date */}
+                            {/* Target Quantity & Due Date */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block font-bold mb-1">Priority</label>
-                                    <select
-                                        value={priority}
-                                        onChange={(e) => setPriority(e.target.value as any)}
-                                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 font-bold outline-none cursor-pointer"
-                                    >
-                                        <option value="Low">Low</option>
-                                        <option value="Medium">Medium</option>
-                                        <option value="High">High</option>
-                                        <option value="Urgent">Urgent</option>
-                                    </select>
+                                    <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Target Quantity *</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min={1}
+                                        value={targetQuantity}
+                                        onChange={(e) => setTargetQuantity(Number(e.target.value))}
+                                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium outline-none focus:border-indigo-500"
+                                    />
                                 </div>
                                 <div>
-                                    <label className="block font-bold mb-1">Due Date</label>
+                                    <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Due Date</label>
                                     <input
                                         type="date"
                                         value={dueDate}
                                         onChange={(e) => setDueDate(e.target.value)}
-                                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 font-mono outline-none"
+                                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium outline-none focus:border-indigo-500"
                                     />
                                 </div>
                             </div>
 
+                            {/* Description */}
                             <div>
-                                <label className="block font-bold mb-1">Description / Instructions</label>
+                                <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Description / Instructions</label>
                                 <textarea
                                     rows={2}
-                                    placeholder="Enter operation specifications..."
+                                    placeholder="Assembly instructions or quality tolerances..."
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none"
+                                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium outline-none focus:border-indigo-500 resize-none"
                                 />
                             </div>
 
-                            <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+                            <div className="pt-3 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
                                 <button
                                     type="button"
                                     onClick={() => setIsAssignTaskModalOpen(false)}
-                                    className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 cursor-pointer"
+                                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={taskEligibleMembers.length === 0 || createTaskMutation.isPending}
-                                    className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold shadow-md cursor-pointer disabled:opacity-50"
+                                    disabled={createTaskMutation.isPending}
+                                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold shadow-md cursor-pointer disabled:opacity-50 transition-colors"
                                 >
-                                    {createTaskMutation.isPending ? 'Assigning…' : 'Assign Task'}
+                                    {createTaskMutation.isPending ? 'Dispatching…' : 'Dispatch Task'}
                                 </button>
                             </div>
                         </form>

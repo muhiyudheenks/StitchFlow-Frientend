@@ -14,14 +14,14 @@ export default function ProductionTab() {
         },
     });
 
-    const prod = dashboardData?.production || {
-        assignedBatchNumber: 'BT-9042',
-        productName: 'Men Outerwear Vintage Denim Jacket',
-        assignedLine: 'Assembly Line A',
-        todayTarget: 420,
-        completedQty: 380,
-        remainingQty: 40,
-        efficiency: 92,
+    const prod = {
+        assignedBatchNumber: dashboardData?.myBatch?.batchCode || dashboardData?.myBatch?.batchName || dashboardData?.production?.assignedBatchNumber || 'N/A',
+        productName: dashboardData?.myBatch?.productName || dashboardData?.production?.productName || 'No Batch Assigned',
+        assignedLine: dashboardData?.myBatch?.batchName || dashboardData?.production?.assignedLine || 'Production Line',
+        todayTarget: dashboardData?.production?.todayTarget || 100,
+        completedQty: dashboardData?.production?.completedQty || 0,
+        remainingQty: dashboardData?.production?.remainingQty || 0,
+        efficiency: dashboardData?.production?.efficiency || 0,
     };
 
     return (

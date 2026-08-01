@@ -12,6 +12,7 @@ import {
     FiLayers,
     FiAlertCircle,
     FiCheckCircle,
+    FiXCircle,
     FiThumbsUp,
     FiThumbsDown
 } from 'react-icons/fi';
@@ -22,6 +23,7 @@ export default function TasksTab() {
     const [selectedBatchId, setSelectedBatchId] = useState('');
     const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
     const [taskName, setTaskName] = useState('');
+    const [garmentProduct, setGarmentProduct] = useState('');
     const [description, setDescription] = useState('');
     const [deadline, setDeadline] = useState('');
     const [targetQuantity, setTargetQuantity] = useState(100);
@@ -58,11 +60,10 @@ export default function TasksTab() {
     });
 
     const createTaskMutation = useMutation({
-        mutationFn: async (payload: { batchId: string; employeeId: string; taskName: string; targetQuantity: number; description: string; deadline: string }) => {
-            const response = await api.post('/api/tasks', {
-                batchId: payload.batchId,
-                assignedEmployee: payload.employeeId,
+        mutationFn: async (payload: { batchId: string; taskName?: string; garmentProduct: string; targetQuantity: number; description: string; deadline: string }) => {
+            const response = await api.post(`/api/manager/batches/${payload.batchId}/tasks`, {
                 taskName: payload.taskName,
+                productName: payload.garmentProduct,
                 targetQuantity: payload.targetQuantity,
                 description: payload.description,
                 dueDate: payload.deadline,
@@ -77,6 +78,7 @@ export default function TasksTab() {
             queryClient.invalidateQueries({ queryKey: ['batchDetails'] });
             queryClient.invalidateQueries({ queryKey: ['productionSummary'] });
             queryClient.invalidateQueries({ queryKey: ['production-batches'] });
+            queryClient.invalidateQueries({ queryKey: ['manager-assigned-batches'] });
 
             setIsCreateModalOpen(false);
             setTaskName('');
@@ -85,23 +87,36 @@ export default function TasksTab() {
             setDeadline('');
             setTargetQuantity(100);
             setErrorMessage(null);
-            showSuccessToast('Task assigned to batch employee successfully!');
+            showSuccessToast('Batch task dispatched to all allocated workers successfully!');
         },
         onError: (err: any) => {
-            setErrorMessage(err.response?.data?.message || err.message || 'Failed to create task');
+            setErrorMessage(err.response?.data?.message || err.message || 'Failed to dispatch task');
         },
     });
 
     const verifyTaskMutation = useMutation({
-        mutationFn: async ({ taskId, status }: { taskId: string; status: 'Completed' | 'Rejected' }) => {
+        mutationFn: async ({ taskId, status }: { taskId: string; status: 'Verified' | 'Completed' | 'Rejected' }) => {
             const response = await api.patch(`/api/tasks/${taskId}/verify`, { status });
             return response.data;
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['managerTasks'] });
-            queryClient.invalidateQueries({ queryKey: ['production-batches'] });
+            queryClient.invalidateQueries({ queryKey: ['all-batch-tasks'] });
             queryClient.invalidateQueries({ queryKey: ['manager-overview'] });
-            showSuccessToast(`Task marked as ${variables.status === 'Completed' ? 'Approved' : 'Rejected'}`);
+            queryClient.invalidateQueries({ queryKey: ['manager-assigned-batches'] });
+            showSuccessToast(`Task ${variables.status === 'Rejected' ? 'Returned for Rework' : 'Approved & Verified'}`);
+        },
+        onError: (err: any) => {
+            setErrorMessage(err.response?.data?.message || err.message || 'Failed to verify task');
+        },
+    });
+
+    // Fetch Active Garment Products for dropdown
+    const { data: activeProducts = [] } = useQuery<any[]>({
+        queryKey: ['active-garment-products'],
+        queryFn: async () => {
+            const res = await api.get('/api/garment-products/active');
+            return res.data?.data || [];
         },
     });
 
@@ -114,25 +129,12 @@ export default function TasksTab() {
             return;
         }
 
-        if (batchMembers.length === 0) {
-            setErrorMessage('No employees have been added to this batch yet.');
-            return;
-        }
-
-        if (!selectedEmployeeId) {
-            setErrorMessage('Please select a Batch Employee to assign');
-            return;
-        }
-
-        if (!taskName.trim()) {
-            setErrorMessage('Task Name is required');
-            return;
-        }
+        const batchGarment = currentBatch?.productName || currentBatch?.garmentName || 'Garment Product';
 
         createTaskMutation.mutate({
             batchId: activeBatchId,
-            employeeId: selectedEmployeeId,
-            taskName: taskName.trim(),
+            garmentProduct: batchGarment,
+            taskName: taskName.trim() || undefined,
             targetQuantity: Number(targetQuantity || 100),
             description: description.trim(),
             deadline,
@@ -301,18 +303,18 @@ export default function TasksTab() {
                                                     </span>
                                                 </div>
 
-                                                {/* Manager Verification Actions for Completed / Under Review Tasks */}
-                                                {(t.status === 'Under Review' || t.status === 'Completed') && (
+                                                {/* Manager Verification Actions */}
+                                                {(t.status === 'Under Review' || t.status === 'under_review' || (t.status === 'Completed' && !t.verifiedByManager)) && (
                                                     <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800">
                                                         <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                                                             Review Required
                                                         </span>
                                                         <div className="flex items-center gap-1.5">
                                                             <button
-                                                                onClick={() => verifyTaskMutation.mutate({ taskId: t.id || t._id, status: 'Completed' })}
+                                                                onClick={() => verifyTaskMutation.mutate({ taskId: t.id || t._id, status: 'Verified' })}
                                                                 disabled={verifyTaskMutation.isPending}
                                                                 className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
-                                                                title="Approve Completed Task"
+                                                                title="Approve Task"
                                                             >
                                                                 <FiThumbsUp size={11} /> Approve
                                                             </button>
@@ -327,6 +329,27 @@ export default function TasksTab() {
                                                         </div>
                                                     </div>
                                                 )}
+
+                                                {(t.status === 'Verified' || (t.status === 'Completed' && t.verifiedByManager)) && (
+                                                    <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800">
+                                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center gap-1">
+                                                            <FiCheckCircle size={11} /> Verified / Approved
+                                                        </span>
+                                                        {t.verifiedByManager && (
+                                                            <span className="text-[10px] font-medium text-slate-400">
+                                                                By {t.verifiedByManager}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {t.status === 'Rejected' && (
+                                                    <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800">
+                                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 flex items-center gap-1">
+                                                            <FiXCircle size={11} /> Rejected / Rework
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))
                                     )}
@@ -337,22 +360,25 @@ export default function TasksTab() {
                 </div>
             )}
 
-            {/* CREATE TASK MODAL */}
+            {/* DISPATCH BATCH TASK MODAL */}
             {isCreateModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn font-sans">
                     <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-2xl relative text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto hide-scrollbar">
                         <button
                             onClick={() => setIsCreateModalOpen(false)}
-                            className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                         >
                             <FiX size={18} />
                         </button>
 
-                        <div className="mb-4">
-                            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">Assign Task to Batch Employee</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Select task operation details for employees assigned to this batch by Admin.
-                            </p>
+                        <div className="mb-5 flex items-center gap-3">
+                            <div className="p-3 rounded-2xl bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300">
+                                <FiPlus size={22} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Dispatch Batch Task</h3>
+                                <p className="text-xs text-slate-500">Automatically creates tasks for all allocated workers</p>
+                            </div>
                         </div>
 
                         {errorMessage && (
@@ -373,7 +399,7 @@ export default function TasksTab() {
                                         setSelectedEmployeeId('');
                                     }}
                                     required
-                                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-purple-500 font-bold cursor-pointer text-slate-900 dark:text-slate-100"
+                                    className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold outline-none focus:border-indigo-500 cursor-pointer"
                                 >
                                     {batches.map((b: any) => (
                                         <option key={b._id || b.id} value={b._id || b.id}>
@@ -381,58 +407,48 @@ export default function TasksTab() {
                                         </option>
                                     ))}
                                 </select>
-                            </div>
-
-                            {/* Batch Employees Selection ONLY */}
-                            <div>
-                                <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">
-                                    Assigned Employee * (Batch Members Only)
-                                </label>
-                                {batchMembers.length === 0 ? (
-                                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 text-amber-700 text-xs font-semibold">
-                                        No employees have been added to this batch yet.
-                                    </div>
-                                ) : (
-                                    <select
-                                        value={selectedEmployeeId}
-                                        onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                                        required
-                                        className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-purple-500 font-bold cursor-pointer text-slate-900 dark:text-slate-100"
-                                    >
-                                        <option value="">-- Select Batch Employee --</option>
-                                        {batchMembers.map((emp: any) => (
-                                            <option key={emp.id || emp._id} value={emp.id || emp._id}>
-                                                {emp.name || emp.fullName} ({emp.designation || emp.department || 'Production Operator'})
-                                            </option>
-                                        ))}
-                                    </select>
-                                )}
+                                {/* Read-only Garment reference text */}
+                                <div className="mt-2 p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900/60 text-xs flex items-center justify-between">
+                                    <span className="font-bold text-purple-700 dark:text-purple-300">Garment (Read-only):</span>
+                                    <span className="font-extrabold text-purple-900 dark:text-purple-100">{currentBatch?.productName || currentBatch?.garmentName || 'Garment Product'}</span>
+                                </div>
                             </div>
 
                             {/* Task Name */}
                             <div>
-                                <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Task Name / Operation *</label>
+                                <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Task Name / Operation (Optional)</label>
                                 <input
                                     type="text"
-                                    required
-                                    placeholder="e.g. Sleeve Seam Stitching & Double Hem"
+                                    placeholder="Auto-generated if left blank (e.g. Denim Shirt Production)"
                                     value={taskName}
                                     onChange={(e) => setTaskName(e.target.value)}
-                                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-purple-500 font-bold text-slate-900 dark:text-slate-100"
+                                    className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium outline-none focus:border-indigo-500"
                                 />
                             </div>
 
-                            {/* Target Quantity */}
-                            <div>
-                                <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Target Quantity * (Pieces)</label>
-                                <input
-                                    type="number"
-                                    required
-                                    min={1}
-                                    value={targetQuantity}
-                                    onChange={(e) => setTargetQuantity(Number(e.target.value))}
-                                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-purple-500 font-bold text-slate-900 dark:text-slate-100"
-                                />
+                            {/* Target Quantity & Due Date */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Target Quantity *</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min={1}
+                                        value={targetQuantity}
+                                        onChange={(e) => setTargetQuantity(Number(e.target.value))}
+                                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium outline-none focus:border-indigo-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Due Date</label>
+                                    <input
+                                        type="date"
+                                        value={deadline}
+                                        onChange={(e) => setDeadline(e.target.value)}
+                                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium outline-none focus:border-indigo-500"
+                                    />
+                                </div>
                             </div>
 
                             {/* Task Description */}
@@ -440,38 +456,27 @@ export default function TasksTab() {
                                 <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Description / Instructions</label>
                                 <textarea
                                     rows={2}
-                                    placeholder="Enter operation instructions or quality specifications..."
+                                    placeholder="Assembly instructions or quality tolerances..."
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-purple-500 text-slate-900 dark:text-slate-100"
+                                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium outline-none focus:border-indigo-500 resize-none"
                                 />
                             </div>
 
-                            {/* Deadline */}
-                            <div>
-                                <label className="block font-bold mb-1 text-slate-700 dark:text-slate-300">Due Date</label>
-                                <input
-                                    type="date"
-                                    value={deadline}
-                                    onChange={(e) => setDeadline(e.target.value)}
-                                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-purple-500 font-mono text-slate-900 dark:text-slate-100"
-                                />
-                            </div>
-
-                            <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+                            <div className="pt-3 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
                                 <button
                                     type="button"
                                     onClick={() => setIsCreateModalOpen(false)}
-                                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={batchMembers.length === 0 || createTaskMutation.isPending}
-                                    className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={createTaskMutation.isPending}
+                                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
-                                    {createTaskMutation.isPending ? 'Assigning…' : 'Assign Task'}
+                                    {createTaskMutation.isPending ? 'Dispatching…' : 'Dispatch Task'}
                                 </button>
                             </div>
                         </form>

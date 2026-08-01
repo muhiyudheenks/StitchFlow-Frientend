@@ -17,6 +17,8 @@ import {
     FiUser
 } from 'react-icons/fi';
 
+import { useAppSelector } from '@/store/hooks';
+
 interface OverviewTabProps {
     onNavigateTab: (tab: EmployeeTab) => void;
 }
@@ -30,35 +32,55 @@ export default function OverviewTab({ onNavigateTab }: OverviewTabProps) {
         },
     });
 
-    const hero = dashboardData?.hero || {
-        employeeName: 'Alexander Vance',
-        greeting: 'Good shift,',
-        department: 'Assembly Line A',
-        designation: 'Senior Line Operator',
-        shift: 'Shift A (08:00 AM - 05:00 PM)',
+    const reduxUser = useAppSelector((state: any) => state.auth?.user);
+    const [localUser, setLocalUser] = React.useState<{ fullName?: string; email?: string; department?: string; designation?: string } | null>(null);
+
+    React.useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const raw = localStorage.getItem('user');
+            if (raw) {
+                try {
+                    setLocalUser(JSON.parse(raw));
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+    }, []);
+
+    const currentUser = reduxUser || localUser;
+
+    const hero = {
+        employeeName: dashboardData?.hero?.employeeName && dashboardData.hero.employeeName !== 'Employee'
+            ? dashboardData.hero.employeeName
+            : currentUser?.fullName || 'Employee User',
+        greeting: dashboardData?.hero?.greeting || 'Good shift,',
+        department: dashboardData?.hero?.department || (currentUser as any)?.department || 'Production',
+        designation: dashboardData?.hero?.designation || (currentUser as any)?.designation || 'Production Operator',
+        shift: dashboardData?.hero?.shift || 'Shift A (08:00 AM - 05:00 PM)',
         currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }),
-        todayAttendanceStatus: 'Checked In (08:42 AM)',
+        todayAttendanceStatus: dashboardData?.hero?.todayAttendanceStatus || 'Checked In',
     };
 
     const kpis = dashboardData?.kpis || {
         todayAttendanceStatus: 'Present (On Time)',
-        pendingTasksCount: 3,
-        completedTasksCount: 14,
+        pendingTasksCount: (dashboardData?.myTasks || []).filter((t: any) => t.status !== 'Completed' && t.status !== 'Verified').length,
+        completedTasksCount: (dashboardData?.myTasks || []).filter((t: any) => t.status === 'Completed' || t.status === 'Verified').length,
         monthlyAttendanceRate: 96.5,
         performanceScore: 94,
-        todayProduction: 380,
-        targetProduction: 420,
+        todayProduction: dashboardData?.production?.completedQty || 0,
+        targetProduction: dashboardData?.production?.todayTarget || 100,
     };
 
     const tasks = dashboardData?.myTasks || [];
-    const production = dashboardData?.production || {
-        assignedBatchNumber: 'BT-9042',
-        productName: 'Men Outerwear Vintage Denim Jacket',
-        assignedLine: 'Assembly Line A',
-        todayTarget: 420,
-        completedQty: 380,
-        remainingQty: 40,
-        efficiency: 92,
+    const production = {
+        assignedBatchNumber: dashboardData?.myBatch?.batchCode || dashboardData?.myBatch?.batchName || dashboardData?.production?.assignedBatchNumber || 'N/A',
+        productName: dashboardData?.myBatch?.productName || dashboardData?.production?.productName || 'No Batch Assigned',
+        assignedLine: dashboardData?.myBatch?.batchName || dashboardData?.production?.assignedLine || 'Production Line',
+        todayTarget: dashboardData?.production?.todayTarget || 100,
+        completedQty: dashboardData?.production?.completedQty || 0,
+        remainingQty: dashboardData?.production?.remainingQty || 0,
+        efficiency: dashboardData?.production?.efficiency || 0,
     };
 
     const activities = dashboardData?.recentActivities || [];
@@ -180,7 +202,7 @@ export default function OverviewTab({ onNavigateTab }: OverviewTabProps) {
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="text-lg font-extrabold text-slate-900">My Assigned Tasks</h3>
-                            <p className="text-xs text-slate-500">Tasks assigned by Line Manager Robert Vance</p>
+                            <p className="text-xs text-slate-500">Tasks assigned by Line Manager {dashboardData?.myManager?.fullName || dashboardData?.profile?.reportingManager || 'Production Manager'}</p>
                         </div>
                         <button onClick={() => onNavigateTab('tasks')} className="text-xs font-extrabold text-purple-600 hover:underline flex items-center gap-1">
                             <span>View All Tasks</span> <FiArrowRight size={13} />

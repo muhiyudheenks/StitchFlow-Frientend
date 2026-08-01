@@ -5,6 +5,7 @@ export type AdminTab =
     | 'managers'
     | 'production'
     | 'inventory'
+    | 'garment-products'
     | 'attendance'
     | 'analytics'
     | 'reports'

@@ -14,6 +14,8 @@ import { LoginPageValues, LoginSchema } from '../validations/authSchema';
 import { saveOtpContext } from '@/shared/utils/save-local';
 import { AxiosError } from 'axios';
 import { ApiError } from '@/shared/types/api';
+import api from '@/config';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
     const loginMutation = useLogin();
@@ -197,7 +199,7 @@ export default function LoginPage() {
                                     </label>
                                     <Link
                                         href="/forgot-password"
-                                        className="text-xs font-bold text-purple-600 hover:text-purple-700 transition-colors"
+                                        className="text-xs font-bold !text-purple-600 hover:text-purple-700 transition-colors"
                                     >
                                         Forgot Password?
                                     </Link>
@@ -258,7 +260,7 @@ export default function LoginPage() {
                                 </span>
                             </div>
 
-                            <button
+                            {/* <button
                                 type="button"
                                 className="w-full h-12 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm transition-all duration-200 flex items-center justify-center gap-3 shadow-sm cursor-pointer"
                             >
@@ -281,7 +283,30 @@ export default function LoginPage() {
                                     />
                                 </svg>
                                 <span>Continue with Google</span>
-                            </button>
+                            </button> */}
+                            <GoogleLogin
+                                theme="outline"
+                                size="large"
+                                shape="pill"
+                                width="100%"
+                                onSuccess={async (credentialResponse) => {
+                                    try {
+                                        const response = await api.post("/auth/google-login", {
+                                            credential: credentialResponse.credential,
+                                        });
+
+                                        // ഇവിടെ നിങ്ങളുടെ redux login action
+                                        // dispatch(signInSucceeded(response.data));
+
+                                        router.push("/dashboard");
+                                    } catch (err) {
+                                        console.log(err);
+                                    }
+                                }}
+                                onError={() => {
+                                    console.log("Google Login Failed");
+                                }}
+                            />
                         </form>
 
                         <div className="mt-8 text-center text-xs text-slate-500 font-medium">
