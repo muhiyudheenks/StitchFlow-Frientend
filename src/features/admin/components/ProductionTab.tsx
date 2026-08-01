@@ -47,6 +47,9 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
 
     // Selected Batch for Task Assignment Section
     const [selectedBatch, setSelectedBatch] = useState<ProductionBatchData | null>(null);
+    const currentSelectedBatch = selectedBatch
+        ? batches.find((b: any) => (b._id || b.id) === (selectedBatch._id || selectedBatch.id)) || selectedBatch
+        : null;
     const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<BatchTaskData | null>(null);
 
@@ -338,18 +341,18 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
             )}
 
             {/* MANAGER TASK ASSIGNMENT SECTION (Opened for selected batch) */}
-            {selectedBatch && (
+            {currentSelectedBatch && (
                 <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-2 border-purple-500/40 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 animate-fadeIn font-sans">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                         <div>
                             <div className="flex items-center gap-2">
                                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
-                                    {selectedBatch.batchName}
+                                    {currentSelectedBatch.batchName}
                                 </span>
                                 <span className="text-xs font-bold text-slate-400">Task Assignment Section</span>
                             </div>
                             <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mt-1">
-                                Tasks &amp; Operations for {selectedBatch.batchName}
+                                Tasks &amp; Operations for {currentSelectedBatch.batchName}
                             </h3>
                         </div>
 
@@ -374,7 +377,7 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                     </div>
 
                     {/* Tasks List */}
-                    {(!selectedBatch.tasks || selectedBatch.tasks.length === 0) ? (
+                    {(!currentSelectedBatch.tasks || currentSelectedBatch.tasks.length === 0) ? (
                         <div className="py-12 text-center text-slate-400 font-semibold space-y-2">
                             <FiList size={24} className="mx-auto text-slate-300" />
                             <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No tasks assigned for this batch yet.</p>
@@ -382,7 +385,7 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                         </div>
                     ) : (
                         (() => {
-                            const allTasks = selectedBatch.tasks || [];
+                            const allTasks = currentSelectedBatch.tasks || [];
                             const activeTasks = allTasks.filter((t: any) => {
                                 const s = (t.status || '').toLowerCase();
                                 return s !== 'completed' && s !== 'verified';
