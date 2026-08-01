@@ -25,6 +25,10 @@ import {
     FiTrash2,
 } from 'react-icons/fi';
 
+import Sidebar from '@/features/manager/components/Sidebar';
+import Header from '@/features/manager/components/Header';
+import { ManagerTab } from '@/features/manager/types';
+
 interface PageProps {
     params: Promise<{ batchId: string }>;
 }
@@ -34,6 +38,17 @@ export default function ManagerBatchTasksPage({ params }: PageProps) {
     const batchId = resolvedParams.batchId;
     const router = useRouter();
     const queryClient = useQueryClient();
+
+    // Layout state
+    const [collapsed, setCollapsed] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [activeTab, setActiveTabState] = useState<ManagerTab>('production');
+
+    const handleSetActiveTab = (tab: ManagerTab) => {
+        setActiveTabState(tab);
+        const targetRoute = tab === 'overview' ? '/dashboard/manager' : `/dashboard/manager/${tab}`;
+        router.push(targetRoute);
+    };
 
     // Modal state for Dispatching Batch Task
     const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
@@ -258,76 +273,76 @@ export default function ManagerBatchTasksPage({ params }: PageProps) {
     const membersList = batch.members || [];
 
     return (
-        <div className="min-h-screen bg-[#FAFAFC] dark:bg-[#090D16] text-slate-900 dark:text-slate-100 font-sans p-4 sm:p-6 md:p-10 space-y-6 max-w-7xl mx-auto">
-            {/* Toast Notification */}
-            {toastMessage && (
-                <div className="fixed top-5 right-5 z-50 p-4 rounded-2xl bg-emerald-600 text-white font-extrabold text-xs shadow-2xl flex items-center gap-2 animate-bounce">
-                    <FiCheckCircle size={18} />
-                    <span>{toastMessage}</span>
-                </div>
-            )}
+        <div className="flex min-h-screen bg-[#FAFAFC] dark:bg-[#090D16] font-sans antialiased text-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white transition-colors">
+            {/* Manager Sidebar */}
+            <Sidebar
+                activeTab={activeTab}
+                setActiveTab={handleSetActiveTab}
+                collapsed={collapsed}
+                setCollapsed={setCollapsed}
+                mobileOpen={mobileOpen}
+                setMobileOpen={setMobileOpen}
+            />
 
-            {/* Back Header & Title */}
-            <div className="flex items-center justify-between gap-4">
-                <button
-                    onClick={() => router.push('/dashboard/manager/production')}
-                    className="inline-flex items-center gap-2 text-xs font-extrabold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl shadow-xs transition-colors cursor-pointer"
-                >
-                    <FiArrowLeft size={16} />
-                    <span>Back to Assigned Batches</span>
-                </button>
-            </div>
+            {/* Main Workspace Area */}
+            <div className="flex-1 flex flex-col min-w-0">
+                <Header
+                    activeTab={activeTab}
+                    onToggleMobileMenu={() => setMobileOpen(!mobileOpen)}
+                />
 
-            {/* Batch Banner Card */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 uppercase">
-                                {batch.batchNumber || 'BATCH'}
-                            </span>
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                                batch.status === 'Completed' || batch.status === 'COMPLETED'
-                                    ? 'bg-emerald-100 text-emerald-700'
-                                    : 'bg-blue-100 text-blue-700'
-                            }`}>
-                                {batch.status || 'Active'}
-                            </span>
+                <main className="flex-1 p-4 sm:p-6 md:p-10 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
+                    {/* Toast Notification */}
+                    {toastMessage && (
+                        <div className="fixed top-5 right-5 z-50 p-4 rounded-2xl bg-emerald-600 text-white font-extrabold text-xs shadow-2xl flex items-center gap-2 animate-bounce">
+                            <FiCheckCircle size={18} />
+                            <span>{toastMessage}</span>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                            {batch.batchName}
-                        </h1>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pt-1">
-                            <FiUser className="text-indigo-500" />
-                            <span>Manager: <strong className="text-slate-700 dark:text-slate-200">{batch.manager?.fullName || 'Self'}</strong></span>
-                        </p>
+                    )}
+
+                    {/* Back Header & Title */}
+                    <div className="flex items-center justify-between gap-4">
+                        <button
+                            onClick={() => router.push('/dashboard/manager/production')}
+                            className="inline-flex items-center gap-2 text-xs font-extrabold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl shadow-xs transition-colors cursor-pointer"
+                        >
+                            <FiArrowLeft size={14} /> Back to My Assigned Batches
+                        </button>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => {
-                                setAddEmployeeError(null);
-                                setIsAddEmployeeModalOpen(true);
-                            }}
-                            disabled={batch.status === 'Completed' || batch.status === 'COMPLETED'}
-                            className="px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 font-extrabold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
-                        >
-                            <FiUserPlus size={15} />
-                            <span>Add Employees</span>
-                        </button>
-                        <button
-                            onClick={() => {
-                                setGarmentProduct(batch.garmentName || batch.productName || '');
-                                setErrorMessage(null);
-                                setIsDispatchModalOpen(true);
-                            }}
-                            disabled={batch.status === 'Completed' || batch.status === 'COMPLETED'}
-                            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <FiSend size={15} />
-                            <span>Dispatch Batch Task</span>
-                        </button>
-                    </div>
+                    {/* Batch Banner Card */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 uppercase">
+                                        {batch.batchNumber || 'BATCH'}
+                                    </span>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                                        batch.status === 'Completed' || batch.status === 'COMPLETED'
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : 'bg-blue-100 text-blue-700'
+                                    }`}>
+                                        {batch.status || 'Active'}
+                                    </span>
+                                </div>
+                                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                                    {batch.batchName}
+                                </h1>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pt-1">
+                                    <FiUser className="text-indigo-500" />
+                                    <span>Manager: <strong className="text-slate-700 dark:text-slate-200">{batch.manager?.fullName || 'Self'}</strong></span>
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setIsDispatchModalOpen(true)}
+                                disabled={batch.status === 'Completed' || batch.status === 'COMPLETED'}
+                                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <FiSend size={15} />
+                                <span>Dispatch Batch Task</span>
+                            </button>
+                        </div>
                 </div>
 
                 {/* Batch Metrics Grid */}
@@ -373,7 +388,6 @@ export default function ManagerBatchTasksPage({ params }: PageProps) {
                         />
                     </div>
                 </div>
-            </div>
 
             {/* Allocated Team Members Section (3 Columns) */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
@@ -952,6 +966,8 @@ export default function ManagerBatchTasksPage({ params }: PageProps) {
                     </div>
                 </div>
             )}
+                </main>
+            </div>
         </div>
     );
 }
