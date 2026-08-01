@@ -375,26 +375,16 @@ export default function ManagerBatchTasksPage({ params }: PageProps) {
                 </div>
             </div>
 
-            {/* Allocated Team Members Section */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
+            {/* Allocated Team Members Section (3 Columns) */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                     <div>
                         <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                             <FiUsers className="text-indigo-600" />
                             <span>Allocated Team Members ({membersList.length})</span>
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Employees currently assigned to this batch team by manager.</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Employees assigned to this batch grouped into cutting, stitching, and finishing teams.</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setAddEmployeeError(null);
-                            setIsAddEmployeeModalOpen(true);
-                        }}
-                        disabled={batch.status === 'Completed' || batch.status === 'COMPLETED'}
-                        className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                        <FiUserPlus size={14} /> Add Employee
-                    </button>
                 </div>
 
                 {(() => {
@@ -423,79 +413,66 @@ export default function ManagerBatchTasksPage({ params }: PageProps) {
                     };
 
                     const categories = [
-                        { key: 'Cutting', title: 'Cutting Workers', color: 'purple' },
-                        { key: 'Stitching', title: 'Stitching Workers', color: 'indigo' },
-                        { key: 'Finishing', title: 'Finishing Workers', color: 'amber' },
+                        { key: 'Cutting', typeVal: 'Cutting' as const, title: 'CUTTING WORKERS', color: 'purple' },
+                        { key: 'Stitching', typeVal: 'Stitching' as const, title: 'STITCHING WORKERS', color: 'indigo' },
+                        { key: 'Finishing', typeVal: 'Finishing' as const, title: 'FINISHING WORKERS', color: 'amber' },
                     ];
 
-                    const activeCategories = categories.map((cat) => ({
-                        ...cat,
-                        members: membersList.filter((m: any) => categorizeMember(m) === cat.key),
-                    })).filter((cat) => cat.members.length > 0);
-
-                    if (activeCategories.length === 0) {
-                        return (
-                            <div className="py-8 text-center text-xs text-slate-400 font-semibold">
-                                No team members added yet. Click "Add Employee" to assign workers to this batch team.
-                            </div>
-                        );
-                    }
-
                     return (
-                        <div className="space-y-6">
-                            {activeCategories.map((cat) => (
-                                <div key={cat.key} className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-extrabold uppercase ${
-                                            cat.color === 'purple'
-                                                ? 'bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900'
-                                                : cat.color === 'amber'
-                                                ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900'
-                                                : 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900'
-                                        }`}>
-                                            {cat.title} ({cat.members.length})
-                                        </span>
-                                    </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {categories.map((cat) => {
+                                const catMembers = membersList.filter((m: any) => categorizeMember(m) === cat.key);
 
-                                    <div className="border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden">
-                                        <table className="w-full text-left border-collapse text-xs">
-                                            <thead>
-                                                <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-slate-800 text-[10px] font-extrabold uppercase text-slate-500">
-                                                    <th className="py-3 px-4">Employee Name</th>
-                                                    <th className="py-3 px-4">Email</th>
-                                                    <th className="py-3 px-4">Worker Category</th>
-                                                    <th className="py-3 px-4 text-right">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                                                {cat.members.map((m: any) => {
-                                                    const empId = typeof m === 'object' ? m._id || m.id : m;
-                                                    const empName = typeof m === 'object' ? m.fullName || m.name || m.email : `Employee ${String(empId).slice(-4)}`;
-                                                    const empEmail = typeof m === 'object' ? m.email || '' : 'N/A';
+                                return (
+                                    <div
+                                        key={cat.key}
+                                        className="bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4"
+                                    >
+                                        <div className="space-y-3">
+                                            {/* Box Header */}
+                                            <div className="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-slate-800">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`w-2.5 h-2.5 rounded-full ${
+                                                        cat.color === 'purple' ? 'bg-purple-600' : cat.color === 'amber' ? 'bg-amber-500' : 'bg-indigo-600'
+                                                    }`} />
+                                                    <h4 className="text-xs font-extrabold tracking-wider uppercase text-slate-800 dark:text-slate-200">
+                                                        {cat.title}
+                                                    </h4>
+                                                </div>
+                                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+                                                    cat.color === 'purple'
+                                                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300'
+                                                        : cat.color === 'amber'
+                                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300'
+                                                        : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300'
+                                                }`}>
+                                                    {catMembers.length}
+                                                </span>
+                                            </div>
 
-                                                    return (
-                                                        <tr key={empId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                                                            <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-                                                                <div className="h-7 w-7 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-extrabold text-xs shrink-0">
-                                                                    {empName.charAt(0).toUpperCase()}
+                                            {/* Members List inside Box */}
+                                            {catMembers.length === 0 ? (
+                                                <div className="py-6 text-center text-xs text-slate-400 font-semibold italic">
+                                                    No {cat.key.toLowerCase()} workers assigned
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    {catMembers.map((m: any) => {
+                                                        const empId = typeof m === 'object' ? m._id || m.id : m;
+                                                        const empName = typeof m === 'object' ? m.fullName || m.name || m.email : `Employee ${String(empId).slice(-4)}`;
+                                                        const empCode = typeof m === 'object' ? (m.employeeId || `EMP-${String(empId).slice(-4).toUpperCase()}`) : `EMP-${String(empId).slice(-4).toUpperCase()}`;
+
+                                                        return (
+                                                            <div
+                                                                key={empId}
+                                                                className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 text-xs shadow-xs"
+                                                            >
+                                                                <div className="min-w-0">
+                                                                    <p className="font-extrabold text-slate-900 dark:text-white truncate">{empName}</p>
+                                                                    <p className="text-[10px] text-slate-400 font-mono">
+                                                                        {empCode} • {cat.key} Worker
+                                                                    </p>
                                                                 </div>
-                                                                <span>{empName}</span>
-                                                            </td>
-                                                            <td className="py-3.5 px-4 text-slate-500 font-medium">
-                                                                {empEmail}
-                                                            </td>
-                                                            <td className="py-3.5 px-4">
-                                                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wide ${
-                                                                    cat.color === 'purple'
-                                                                        ? 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-900/80'
-                                                                        : cat.color === 'amber'
-                                                                        ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/80'
-                                                                        : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-900/80'
-                                                                }`}>
-                                                                    {cat.key} Worker
-                                                                </span>
-                                                            </td>
-                                                            <td className="py-3.5 px-4 text-right">
                                                                 <button
                                                                     onClick={() => {
                                                                         if (confirm(`Remove ${empName} from this batch team?`)) {
@@ -503,27 +480,61 @@ export default function ManagerBatchTasksPage({ params }: PageProps) {
                                                                         }
                                                                     }}
                                                                     disabled={removeMemberMutation.isPending || batch.status === 'Completed' || batch.status === 'COMPLETED'}
-                                                                    className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-600 dark:text-rose-400 cursor-pointer disabled:opacity-40 transition-colors"
-                                                                    title="Remove from batch"
+                                                                    className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-600 dark:text-rose-400 cursor-pointer disabled:opacity-40 transition-colors shrink-0"
+                                                                    title="Remove worker"
                                                                 >
-                                                                    <FiTrash2 size={14} />
+                                                                    <FiTrash2 size={13} />
                                                                 </button>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Bottom "+ Add [Category] Worker" Button */}
+                                        <button
+                                            onClick={() => {
+                                                setSelectedWorkerType(cat.typeVal);
+                                                setSelectedEmployeeIds([]);
+                                                setAddEmployeeError(null);
+                                                setIsAddEmployeeModalOpen(true);
+                                            }}
+                                            disabled={batch.status === 'Completed' || batch.status === 'COMPLETED'}
+                                            className="w-full py-2 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-800 bg-white dark:bg-slate-900 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 font-extrabold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 mt-2"
+                                        >
+                                            <FiUserPlus size={14} />
+                                            <span>+ Add {cat.key} Worker</span>
+                                        </button>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     );
                 })()}
             </div>
 
-            {/* Batch Tasks List */}
+            {/* Assigned Batch Tasks List */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <div>
+                        <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                            <FiCheckSquare className="text-indigo-600" />
+                            <span>Assigned Batch Tasks ({tasks.length})</span>
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Dispatched tasks assigned to allocated batch employees.</p>
+                    </div>
+
+                    <button
+                        onClick={() => setIsDispatchModalOpen(true)}
+                        disabled={batch.status === 'Completed' || batch.status === 'COMPLETED' || membersList.length === 0}
+                        className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    >
+                        <FiSend size={15} />
+                        <span>+ Assign Task</span>
+                    </button>
+                </div>
+
                 {(() => {
                     const activeTasksList = tasks.filter((t: any) => {
                         const s = (t.status || '').toLowerCase();
@@ -540,12 +551,12 @@ export default function ManagerBatchTasksPage({ params }: PageProps) {
                             <table className="w-full text-left border-collapse text-xs">
                                 <thead>
                                     <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-slate-800 text-[10px] font-extrabold uppercase text-slate-500">
-                                        <th className="py-3 px-4">Worker Type</th>
-                                        <th className="py-3 px-4">Task Name</th>
-                                        <th className="py-3 px-4">Assigned Employee</th>
+                                        <th className="py-3 px-4">Worker Category</th>
+                                        <th className="py-3 px-4">Operation Task</th>
+                                        <th className="py-3 px-4">Assigned Worker</th>
                                         <th className="py-3 px-4">Quantity</th>
                                         <th className="py-3 px-4">Status</th>
-                                        <th className="py-3 px-4 text-right">Actions / Verification</th>
+                                        <th className="py-3 px-4 text-right">Review Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">

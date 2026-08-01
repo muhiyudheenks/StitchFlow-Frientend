@@ -24,6 +24,7 @@ import {
     FiClock,
     FiInbox,
     FiArrowRight,
+    FiTag,
 } from 'react-icons/fi';
 
 type WorkerType = 'Cutting' | 'Stitching' | 'Finishing';
@@ -360,7 +361,7 @@ export default function ProductionTab() {
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">
-                                                {b.batchNumber || b.batchCode || 'BATCH'} • {garment}
+                                                {b.batchNumber || b.batchCode || 'BATCH'}
                                             </span>
                                             <h3 className="text-lg font-extrabold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mt-0.5">
                                                 {b.batchName}
@@ -375,6 +376,17 @@ export default function ProductionTab() {
                                         >
                                             {b.status || 'Active'}
                                         </span>
+                                    </div>
+
+                                    {/* Prominent Garment Field Block */}
+                                    <div className="p-2.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 text-center space-y-1">
+                                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">GARMENT</span>
+                                        <div className="flex justify-center">
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-extrabold uppercase bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900">
+                                                <FiTag className="text-purple-600 dark:text-purple-400 shrink-0" size={13} />
+                                                <span>{garment}</span>
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* Progress Bar */}
