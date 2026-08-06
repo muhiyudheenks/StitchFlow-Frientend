@@ -12,11 +12,17 @@ import {
     useFabricMutations,
     useThreadMutations,
     useGarmentMutations,
+    useCategories,
+    useCategoryMutations,
+    useWarehouses,
+    useWarehouseMutations,
 } from '../hooks/useInventory';
 import {
     FabricItemData,
     ThreadItemData,
     GarmentItemData,
+    CategoryData,
+    WarehouseData,
 } from '../services/inventory-service';
 import {
     FiBox,
@@ -73,9 +79,22 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
     const [garmentModalOpen, setGarmentModalOpen] = useState(false);
     const [editingGarment, setEditingGarment] = useState<GarmentItemData | null>(null);
 
+    // Category Manager Modal State
+    const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
+    const [newCategoryInput, setNewCategoryInput] = useState('');
+    const [categoryError, setCategoryError] = useState<string | null>(null);
+
+    // Warehouse Manager Modal State
+    const [warehouseManagerOpen, setWarehouseManagerOpen] = useState(false);
+    const [newWarehouseInput, setNewWarehouseInput] = useState('');
+    const [warehouseError, setWarehouseError] = useState<string | null>(null);
+    const [warehouseToDelete, setWarehouseToDelete] = useState<WarehouseData | null>(null);
+
     // Queries
     const { data: summary } = useInventorySummary();
     const { data: analytics } = useInventoryAnalytics();
+    const { data: categoriesList = [] } = useCategories();
+    const { data: warehousesList = [] } = useWarehouses();
 
     const { data: fabricData, isLoading: isLoadingFabric } = useFabricInventory({
         search: fabricSearch,
@@ -110,6 +129,8 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
     const { createFabric, updateFabric, deleteFabric } = useFabricMutations();
     const { createThread, updateThread, deleteThread } = useThreadMutations();
     const { createGarment, updateGarment, deleteGarment } = useGarmentMutations();
+    const { createCategory, deleteCategory } = useCategoryMutations();
+    const { createWarehouse, deleteWarehouse } = useWarehouseMutations();
 
     const fabricsList: FabricItemData[] = fabricData?.data || [];
     const fabricPagination = fabricData?.pagination || { page: 1, totalPages: 1, total: 0 };
@@ -442,7 +463,7 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                     {/* Table */}
                     <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs min-w-[900px]">
+                            <table className="w-full text-left text-xs min-width: 900px">
                                 <thead>
                                     <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-wider">
                                         <th className="py-4 px-6">Fabric ID</th>
@@ -600,7 +621,7 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                     {/* Table */}
                     <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs min-w-[850px]">
+                            <table className="w-full text-left text-xs min-w-850px">
                                 <thead>
                                     <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-wider">
                                         <th className="py-4 px-6">Thread ID</th>
@@ -705,6 +726,23 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
             {/* TAB CONTENT: 3. FINISHED GARMENTS INVENTORY */}
             {activeSubTab === 'garments' && (
                 <div className="space-y-6">
+                    {/* Header Banner for Finished Garments */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 p-6 rounded-3xl shadow-xs">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300">
+                                <FiPackage size={22} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
+                                    Finished Garments Master Catalog &amp; Inventory
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Single source of truth for creating, managing, pricing, and tracking finished apparel products
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Filters */}
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                         <div className="sm:col-span-6 relative">
@@ -725,10 +763,11 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                 className="w-full h-12 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 shadow-xs"
                             >
                                 <option value="All">All Categories</option>
-                                <option value="Denim Outerwear">Denim Outerwear</option>
-                                <option value="Casual Shirts">Casual Shirts</option>
-                                <option value="T-Shirts">T-Shirts</option>
-                                <option value="Trousers">Trousers</option>
+                                {categoriesList.map((cat: CategoryData) => (
+                                    <option key={cat._id || cat.name} value={cat.name}>
+                                        {cat.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
@@ -813,12 +852,18 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                                         <button
                                                             onClick={() => { setEditingGarment(item); setGarmentModalOpen(true); }}
                                                             className="p-2 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                                            title="Edit Garment Product"
                                                         >
                                                             <FiEdit3 size={15} />
                                                         </button>
                                                         <button
-                                                            onClick={() => item._id && deleteGarment.mutate(item._id)}
+                                                            onClick={() => {
+                                                                if (item._id && confirm(`Are you sure you want to delete finished garment product '${item.productName}'?`)) {
+                                                                    deleteGarment.mutate(item._id);
+                                                                }
+                                                            }}
                                                             className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                                            title="Delete Garment Product"
                                                         >
                                                             <FiTrash2 size={15} />
                                                         </button>
@@ -1261,7 +1306,8 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                 <input
                                     type="text"
                                     name="productName"
-                                    defaultValue={editingGarment?.productName || 'Heritage Denim Jacket'}
+                                    defaultValue={editingGarment?.productName || ''}
+                                    placeholder="e.g. Heritage Denim Jacket"
                                     required
                                     className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500"
                                 />
@@ -1269,26 +1315,40 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block font-bold mb-1">Style Number *</label>
+                                    <label className="block font-bold mb-1">Style Number / SKU *</label>
                                     <input
                                         type="text"
                                         name="styleNumber"
-                                        defaultValue={editingGarment?.styleNumber || 'ST-9001'}
+                                        defaultValue={editingGarment?.styleNumber || ''}
+                                        placeholder="e.g. ST-9001"
                                         required
                                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block font-bold mb-1">Category *</label>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="block font-bold">Category *</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setCategoryError(null);
+                                                setCategoryManagerOpen(true);
+                                            }}
+                                            className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                                        >
+                                            + Manage Categories
+                                        </button>
+                                    </div>
                                     <select
                                         name="category"
-                                        defaultValue={editingGarment?.category || 'Denim Outerwear'}
-                                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500"
+                                        defaultValue={editingGarment?.category || (categoriesList[0]?.name || 'Casual Shirts')}
+                                        className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500 font-medium"
                                     >
-                                        <option value="Denim Outerwear">Denim Outerwear</option>
-                                        <option value="Casual Shirts">Casual Shirts</option>
-                                        <option value="T-Shirts">T-Shirts</option>
-                                        <option value="Trousers">Trousers</option>
+                                        {categoriesList.map((cat: CategoryData) => (
+                                            <option key={cat._id || cat.name} value={cat.name}>
+                                                {cat.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -1313,7 +1373,8 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                     <input
                                         type="text"
                                         name="color"
-                                        defaultValue={editingGarment?.color || 'Washed Blue'}
+                                        defaultValue={editingGarment?.color || ''}
+                                        placeholder="e.g. Navy Blue"
                                         required
                                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500"
                                     />
@@ -1326,7 +1387,8 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                     <input
                                         type="number"
                                         name="quantityAvailable"
-                                        defaultValue={editingGarment?.quantityAvailable ?? 450}
+                                        defaultValue={editingGarment?.quantityAvailable ?? 0}
+                                        min={0}
                                         required
                                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500"
                                     />
@@ -1336,7 +1398,8 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                     <input
                                         type="number"
                                         name="quantityReserved"
-                                        defaultValue={editingGarment?.quantityReserved ?? 50}
+                                        defaultValue={editingGarment?.quantityReserved ?? 0}
+                                        min={0}
                                         required
                                         className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500"
                                     />
@@ -1345,23 +1408,25 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div>
-                                    <label className="block font-bold mb-1">Unit Cost ($) *</label>
+                                    <label className="block font-bold mb-1">Unit Cost *</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         name="unitCost"
-                                        defaultValue={editingGarment?.unitCost ?? 18.50}
+                                        defaultValue={editingGarment?.unitCost ?? 0}
+                                        min={0}
                                         required
                                         className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block font-bold mb-1">Selling Price ($) *</label>
+                                    <label className="block font-bold mb-1">Selling Price *</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         name="sellingPrice"
-                                        defaultValue={editingGarment?.sellingPrice ?? 45.00}
+                                        defaultValue={editingGarment?.sellingPrice ?? 0}
+                                        min={0}
                                         required
                                         className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500"
                                     />
@@ -1381,14 +1446,30 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                             </div>
 
                             <div>
-                                <label className="block font-bold mb-1">Warehouse Location *</label>
-                                <input
-                                    type="text"
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block font-bold">Warehouse Location *</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setWarehouseError(null);
+                                            setWarehouseManagerOpen(true);
+                                        }}
+                                        className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                                    >
+                                        + Manage Warehouses
+                                    </button>
+                                </div>
+                                <select
                                     name="warehouse"
-                                    defaultValue={editingGarment?.warehouse || 'Finished Dispatch Hub 1'}
-                                    required
-                                    className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500"
-                                />
+                                    defaultValue={editingGarment?.warehouse || (warehousesList[0]?.name || 'Finished Dispatch Hub 1')}
+                                    className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 outline-none focus:border-emerald-500 font-medium"
+                                >
+                                    {warehousesList.map((wh: WarehouseData) => (
+                                        <option key={wh._id || wh.name} value={wh.name}>
+                                            {wh.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
@@ -1407,6 +1488,310 @@ export default function InventoryTab({ onOpenQuickAction }: InventoryTabProps) {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MANAGE CATEGORIES MODAL */}
+            {categoryManagerOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-2xl relative text-slate-900 dark:text-white max-h-[85vh] overflow-y-auto">
+                        <button
+                            onClick={() => {
+                                setCategoryManagerOpen(false);
+                                setNewCategoryInput('');
+                                setCategoryError(null);
+                            }}
+                            className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        >
+                            <FiX size={18} />
+                        </button>
+
+                        <div className="mb-4">
+                            <h3 className="text-xl font-extrabold tracking-tight">Manage Garment Categories</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Create new custom categories or remove unused categories.
+                            </p>
+                        </div>
+
+                        {categoryError && (
+                            <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2 border border-rose-200 dark:border-rose-900/50">
+                                <FiAlertTriangle size={16} className="shrink-0" />
+                                <span>{categoryError}</span>
+                            </div>
+                        )}
+
+                        {/* Add Category Form */}
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                setCategoryError(null);
+                                if (!newCategoryInput.trim()) return;
+                                createCategory.mutate(newCategoryInput.trim(), {
+                                    onSuccess: () => {
+                                        setNewCategoryInput('');
+                                    },
+                                    onError: (err: any) => {
+                                        setCategoryError(err.response?.data?.message || err.message || 'Failed to create category');
+                                    },
+                                });
+                            }}
+                            className="flex gap-2 mb-6"
+                        >
+                            <input
+                                type="text"
+                                placeholder="New category name..."
+                                value={newCategoryInput}
+                                onChange={(e) => setNewCategoryInput(e.target.value)}
+                                className="flex-1 h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs font-medium outline-none focus:border-emerald-500"
+                            />
+                            <button
+                                type="submit"
+                                disabled={createCategory.isPending || !newCategoryInput.trim()}
+                                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md disabled:opacity-50 cursor-pointer transition-colors shrink-0 flex items-center gap-1"
+                            >
+                                <FiPlus size={15} />
+                                <span>Add</span>
+                            </button>
+                        </form>
+
+                        {/* Categories List */}
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                            <label className="block text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                                Existing Categories ({categoriesList.length})
+                            </label>
+                            {categoriesList.length === 0 ? (
+                                <p className="text-xs text-slate-400 py-4 text-center">No categories found.</p>
+                            ) : (
+                                categoriesList.map((cat: CategoryData) => (
+                                    <div
+                                        key={cat._id || cat.name}
+                                        className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 text-xs"
+                                    >
+                                        <span className="font-extrabold text-slate-900 dark:text-slate-100">{cat.name}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setCategoryError(null);
+                                                if (confirm(`Are you sure you want to delete category '${cat.name}'?`)) {
+                                                    deleteCategory.mutate(cat._id, {
+                                                        onError: (err: any) => {
+                                                            setCategoryError(
+                                                                err.response?.data?.message || `Cannot delete category '${cat.name}'. It may be assigned to garments.`
+                                                            );
+                                                        },
+                                                    });
+                                                }
+                                            }}
+                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                                            title="Delete category"
+                                        >
+                                            <FiTrash2 size={14} />
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setCategoryManagerOpen(false);
+                                    setNewCategoryInput('');
+                                    setCategoryError(null);
+                                }}
+                                className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MANAGE WAREHOUSES MODAL */}
+            {warehouseManagerOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-2xl relative text-slate-900 dark:text-white max-h-[85vh] overflow-y-auto">
+                        <button
+                            onClick={() => {
+                                setWarehouseManagerOpen(false);
+                                setNewWarehouseInput('');
+                                setWarehouseError(null);
+                            }}
+                            className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        >
+                            <FiX size={18} />
+                        </button>
+
+                        <div className="mb-4">
+                            <h3 className="text-xl font-extrabold tracking-tight">Manage Warehouse Locations</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Create new storage hubs or remove unused warehouse locations.
+                            </p>
+                        </div>
+
+                        {warehouseError && (
+                            <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2 border border-rose-200 dark:border-rose-900/50">
+                                <FiAlertTriangle size={16} className="shrink-0" />
+                                <span>{warehouseError}</span>
+                            </div>
+                        )}
+
+                        {/* Add Warehouse Form */}
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                setWarehouseError(null);
+                                if (!newWarehouseInput.trim()) return;
+                                createWarehouse.mutate(newWarehouseInput.trim(), {
+                                    onSuccess: () => {
+                                        setNewWarehouseInput('');
+                                    },
+                                    onError: (err: any) => {
+                                        setWarehouseError(err.response?.data?.message || err.message || 'Failed to create warehouse');
+                                    },
+                                });
+                            }}
+                            className="flex gap-2 mb-6"
+                        >
+                            <input
+                                type="text"
+                                placeholder="New warehouse location name..."
+                                value={newWarehouseInput}
+                                onChange={(e) => setNewWarehouseInput(e.target.value)}
+                                className="flex-1 h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs font-medium outline-none focus:border-emerald-500"
+                            />
+                            <button
+                                type="submit"
+                                disabled={createWarehouse.isPending || !newWarehouseInput.trim()}
+                                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md disabled:opacity-50 cursor-pointer transition-colors shrink-0 flex items-center gap-1"
+                            >
+                                <FiPlus size={15} />
+                                <span>Add</span>
+                            </button>
+                        </form>
+
+                        {/* Warehouses List */}
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                            <label className="block text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                                Existing Warehouses ({warehousesList.length})
+                            </label>
+                            {warehousesList.length === 0 ? (
+                                <p className="text-xs text-slate-400 py-4 text-center">No warehouses found.</p>
+                            ) : (
+                                warehousesList.map((wh: WarehouseData) => (
+                                    <div
+                                        key={wh._id || wh.name}
+                                        className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 text-xs"
+                                    >
+                                        <span className="font-extrabold text-slate-900 dark:text-slate-100">{wh.name}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setWarehouseError(null);
+                                                setWarehouseToDelete(wh);
+                                            }}
+                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                                            title="Delete warehouse location"
+                                        >
+                                            <FiTrash2 size={14} />
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setWarehouseManagerOpen(false);
+                                    setNewWarehouseInput('');
+                                    setWarehouseError(null);
+                                }}
+                                className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* CUSTOM DELETE WAREHOUSE CONFIRMATION MODAL */}
+            {warehouseToDelete && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
+                    onClick={() => {
+                        setWarehouseToDelete(null);
+                        setWarehouseError(null);
+                    }}
+                >
+                    <div
+                        className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-2xl relative text-slate-900 dark:text-white space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400">
+                                <FiTrash2 size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-extrabold tracking-tight">Delete Warehouse</h3>
+                                <p className="text-xs text-slate-400">Destructive action</p>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                            Are you sure you want to delete warehouse{' '}
+                            <strong className="text-slate-900 dark:text-white font-extrabold">"{warehouseToDelete.name}"</strong>? This action cannot be undone.
+                        </p>
+
+                        {warehouseError && (
+                            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2 border border-rose-200 dark:border-rose-900/50">
+                                <FiAlertTriangle size={16} className="shrink-0" />
+                                <span>{warehouseError}</span>
+                            </div>
+                        )}
+
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setWarehouseToDelete(null);
+                                    setWarehouseError(null);
+                                }}
+                                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={deleteWarehouse.isPending}
+                                onClick={() => {
+                                    const targetId = warehouseToDelete._id || warehouseToDelete.id;
+                                    if (!targetId) {
+                                        setWarehouseError('Invalid warehouse ID');
+                                        return;
+                                    }
+                                    setWarehouseError(null);
+                                    deleteWarehouse.mutate(targetId, {
+                                        onSuccess: () => {
+                                            setWarehouseToDelete(null);
+                                            setWarehouseError(null);
+                                        },
+                                        onError: (err: any) => {
+                                            const msg = err.response?.data?.message || err.message || `Cannot delete warehouse '${warehouseToDelete.name}'. It may be assigned to active inventory items.`;
+                                            setWarehouseError(msg);
+                                        },
+                                    });
+                                }}
+                                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-md disabled:opacity-50 cursor-pointer transition-colors flex items-center gap-1.5"
+                            >
+                                {deleteWarehouse.isPending ? 'Deleting…' : 'Delete'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

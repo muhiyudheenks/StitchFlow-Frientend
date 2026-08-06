@@ -1,2 +1,2 @@
-export { default as AdminDashboard } from './AdminDashboard';
-export { default } from './AdminDashboard';
+export { default as AdminDashboard } from './components/AdminDashboard';
+export { default } from './components/AdminDashboard';

@@ -7,15 +7,15 @@ import Header from './Header';
 import OverviewTab from './OverviewTab';
 import EmployeesTab from './EmployeesTab';
 import TasksTab from './TasksTab';
-import AttendanceTab from './AttendanceTab';
-import ProductionTab from './ProductionTab';
-import InventoryTab from './InventoryTab';
 import ReportsTab from './ReportsTab';
 import ManagerSupportTab from './ManagerSupportTab';
 import { ManagerTab } from '../types';
 import { FiX, FiCheckSquare } from 'react-icons/fi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/config';
+import { AdminAttendanceTab } from '@/features/attendance';
+import { AdminInventoryTab } from '@/features/inventory';
+import { ManagerProductionTab } from '@/features/production';
 
 interface ManagerDashboardProps {
     initialTab?: ManagerTab;
@@ -80,11 +80,11 @@ export default function ManagerDashboard({ initialTab = 'overview' }: ManagerDas
             case 'tasks':
                 return <TasksTab />;
             case 'attendance':
-                return <AttendanceTab />;
+                return <AdminAttendanceTab />;
             case 'production':
-                return <ProductionTab />;
+                return <ManagerProductionTab />;
             case 'inventory':
-                return <InventoryTab />;
+                return <AdminInventoryTab />;
             case 'reports':
                 return <ReportsTab />;
             case 'support':

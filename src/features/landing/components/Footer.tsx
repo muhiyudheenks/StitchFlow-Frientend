@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { FiLayers, FiTwitter, FiLinkedin, FiGithub, FiYoutube } from 'react-icons/fi';
 
@@ -65,9 +66,13 @@ export default function Footer() {
                     {/* Brand Column */}
                     <div className="lg:col-span-2 flex flex-col items-start pr-0 lg:pr-8">
                         <Link href="/" className="flex items-center gap-2.5 mb-6 group">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600 text-white shadow-lg shadow-purple-500/20 group-hover:scale-105 transition-transform">
-                                <FiLayers size={20} />
-                            </div>
+                            <Image
+                                src="/icon.svg"
+                                alt="StitchFlow"
+                                width={36}
+                                height={36}
+                                className="object-contain shrink-0 group-hover:scale-105 transition-transform"
+                            />
                             <span className="text-xl font-extrabold text-white tracking-tight">
                                 StitchFlow
                             </span>

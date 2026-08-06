@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { managerNavItems } from '../constants';
 import { ManagerTab } from '../types';
-import { FiLayers, FiChevronLeft, FiChevronRight, FiLogOut, FiShield, FiX } from 'react-icons/fi';
+import Image from 'next/image';
+import { FiChevronLeft, FiChevronRight, FiLogOut, FiShield, FiX } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import LogoutModal from '@/shared/components/LogoutModal';
 import { useAppSelector } from '@/store/hooks';
@@ -88,9 +89,13 @@ export default function Sidebar({
                             className="flex items-center gap-3 overflow-hidden cursor-pointer"
                             onClick={() => handleSelectTab('overview')}
                         >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/20">
-                                <FiLayers size={20} />
-                            </div>
+                            <Image
+                                src="/icon.svg"
+                                alt="StitchFlow"
+                                width={36}
+                                height={36}
+                                className="object-contain shrink-0"
+                            />
                             {(!collapsed || mobileOpen) && (
                                 <motion.div
                                     initial={{ opacity: 0 }}

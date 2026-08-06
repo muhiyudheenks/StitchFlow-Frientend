@@ -1,24 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import OverviewTab from './components/OverviewTab';
-import UserManagementTab from './components/UserManagementTab';
-import EmployeesTab from './components/EmployeesTab';
-import ManagersTab from './components/ManagersTab';
-import ProductionTab from './components/ProductionTab';
-import GarmentProductsTab from './components/GarmentProductsTab';
-import InventoryTab from './components/InventoryTab';
-import AttendanceTab from './components/AttendanceTab';
-import SupportTicketsTab from './components/SupportTicketsTab';
-import AnalyticsTab from './components/AnalyticsTab';
-import ReportsTab from './components/ReportsTab';
-import SettingsTab from './components/SettingsTab';
-import QuickActionModal from './components/QuickActionModal';
-import { AdminTab } from './types';
-import { useOverviewCards } from './hooks/useOverviewCards';
+import Sidebar from './Sidebar';
+import Header from './Header';
+import OverviewTab from './OverviewTab';
+import UserManagementTab from './UserManagementTab';
+import EmployeesTab from './EmployeesTab';
+import ManagersTab from './ManagersTab';
+import SupportTicketsTab from './SupportTicketsTab';
+import AnalyticsTab from './AnalyticsTab';
+import ReportsTab from './ReportsTab';
+import SettingsTab from './SettingsTab';
+import QuickActionModal from './QuickActionModal';
+import { AdminTab } from '../types';
+import { useOverviewCards } from '../hooks/useOverviewCards';
+import { AdminProductionTab as ProductionTab } from '@/features/production';
+import { AdminInventoryTab } from '@/features/inventory';
+import { AdminAttendanceTab } from '@/features/attendance';
 
 interface AdminDashboardProps {
     initialTab?: AdminTab;
@@ -75,12 +74,10 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
                 return <ManagersTab onOpenQuickAction={handleOpenQuickAction} />;
             case 'production':
                 return <ProductionTab onOpenQuickAction={handleOpenQuickAction} />;
-            case 'garment-products':
-                return <GarmentProductsTab />;
             case 'inventory':
-                return <InventoryTab onOpenQuickAction={handleOpenQuickAction} />;
+                return <AdminInventoryTab onOpenQuickAction={handleOpenQuickAction} />;
             case 'attendance':
-                return <AttendanceTab />;
+                return <AdminAttendanceTab />;
             case 'support':
                 return <SupportTicketsTab />;
             case 'analytics':

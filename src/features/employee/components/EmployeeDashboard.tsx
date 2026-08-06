@@ -7,13 +7,13 @@ import Header from './Header';
 import OverviewTab from './OverviewTab';
 import ProfileTab from './ProfileTab';
 import TasksTab from './TasksTab';
-import AttendanceTab from './AttendanceTab';
-import ProductionTab from './ProductionTab';
 import PerformanceTab from './PerformanceTab';
 import SalaryTab from './SalaryTab';
 import NotificationsTab from './NotificationsTab';
 import SupportTab from './SupportTab';
 import { EmployeeTab } from '../types';
+import { EmployeeAttendanceTab } from '@/features/attendance';
+import { EmployeeProductionTab } from '@/features/production';
 
 interface EmployeeDashboardProps {
     initialTab?: EmployeeTab;
@@ -53,10 +53,9 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
             case 'tasks':
                 return <TasksTab />;
             case 'attendance':
-            case ('leave' as any):
-                return <AttendanceTab />;
+                return <EmployeeAttendanceTab />;
             case 'production':
-                return <ProductionTab />;
+                return <EmployeeProductionTab />;
             case 'performance':
                 return <PerformanceTab />;
             case 'salary':

@@ -10,7 +10,7 @@ import {
     FiCheckCircle,
     FiInfo
 } from 'react-icons/fi';
-import { ManagerInventoryItem } from '../types';
+import { ManagerInventoryItem } from '@/features/manager/types';
 
 export default function InventoryTab() {
     const { data: inventoryData, isLoading, isError } = useQuery<{ items: ManagerInventoryItem[]; alertsCount: number }>({

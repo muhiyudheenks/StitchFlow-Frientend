@@ -10,7 +10,7 @@ import {
     FiCalendar,
     FiUserCheck
 } from 'react-icons/fi';
-import { ManagerAttendanceRecord, ManagerLeaveRequest } from '../types';
+import { ManagerAttendanceRecord, ManagerLeaveRequest } from '@/features/manager/types';
 
 export default function AttendanceTab() {
     const queryClient = useQueryClient();

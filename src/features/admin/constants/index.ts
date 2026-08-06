@@ -27,7 +27,6 @@ export const navItems: NavItem[] = [
     { id: 'employees', label: 'Employees', icon: FiUsers, badge: '340' },
     { id: 'managers', label: 'Managers', icon: FiUserCheck, badge: '18' },
     { id: 'production', label: 'Production', icon: FiCpu, badge: 'Live' },
-    { id: 'garment-products', label: 'Garment Products', icon: FiTag },
     { id: 'inventory', label: 'Inventory', icon: FiBox },
     { id: 'attendance', label: 'Attendance', icon: FiCalendar },
     { id: 'support', label: 'Support Tickets', icon: FiHelpCircle },

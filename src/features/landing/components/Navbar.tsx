@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/store/hooks';
@@ -51,21 +52,14 @@ export default function Navbar() {
                 <div className="mx-auto max-w-7xl px-6 md:px-12 flex items-center justify-between">
                     {/* Left: Logo */}
                     <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                        <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary p-[1.5px] shadow-sm">
-                            <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-900">
-                                <svg
-                                    className="h-4.5 w-4.5 text-white"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth={2.2}
-                                >
-                                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                                    <path d="M2 17l10 5 10-5" />
-                                    <path d="M2 12l10 5 10-5" />
-                                </svg>
-                            </div>
-                        </div>
+                        <Image
+                            src="/icon.svg"
+                            alt="StitchFlow"
+                            width={36}
+                            height={36}
+                            priority
+                            className="object-contain shrink-0"
+                        />
                         <span className="text-lg font-bold tracking-tight text-slate-900">
                             StitchFlow
                         </span>
