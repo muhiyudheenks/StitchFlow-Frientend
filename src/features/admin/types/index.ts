@@ -1,6 +1,5 @@
 export type AdminTab =
     | 'dashboard'
-    | 'users'
     | 'employees'
     | 'managers'
     | 'production'

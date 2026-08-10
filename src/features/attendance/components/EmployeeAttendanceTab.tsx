@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     FiClock,
     FiCheckCircle,
@@ -12,7 +12,9 @@ import {
     FiXCircle,
     FiX,
     FiAlertCircle,
-    FiRefreshCw
+    FiRefreshCw,
+    FiChevronDown,
+    FiChevronUp
 } from 'react-icons/fi';
 import {
     useAttendance,
@@ -24,6 +26,17 @@ import {
 } from '../hooks/useAttendanceAndLeave';
 
 export default function AttendanceTab() {
+    const [mounted, setMounted] = useState(false);
+    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+
+    const toggleRowExpand = (id: string) => {
+        setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     // Queries
     const { data: todayAttendance, isLoading: isLoadingToday, isError: isErrorToday } = useAttendance();
     const { data: historyLogs = [], isLoading: isLoadingHistory, isError: isErrorHistory } = useAttendanceHistory();
@@ -162,7 +175,7 @@ export default function AttendanceTab() {
 
                         <button
                             onClick={handleCheckInToggle}
-                            disabled={isToggling || isLoadingToday}
+                            disabled={!mounted || isToggling || isLoadingToday}
                             className={`px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-60 ${
                                 isCheckedIn
                                     ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20'
@@ -222,6 +235,64 @@ export default function AttendanceTab() {
                 </div>
             </div>
 
+            {/* Today's Multi-Session Timeline */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                        <FiClock className="text-purple-600 dark:text-purple-400" size={16} />
+                        <span>Today&apos;s Check-In / Check-Out Log</span>
+                    </h3>
+                    <span className="text-xs text-slate-400 font-bold">
+                        {todayAttendance?.sessions?.length || 0} Session{(todayAttendance?.sessions?.length || 0) === 1 ? '' : 's'}
+                    </span>
+                </div>
+
+                {isLoadingToday ? (
+                    <div className="py-6 text-center text-xs text-slate-400 font-semibold">Loading session log...</div>
+                ) : !todayAttendance?.sessions || todayAttendance.sessions.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-slate-400 font-semibold bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                        No check-in sessions recorded for today yet.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {todayAttendance.sessions.map((sess: any, idx: number) => {
+                            const inStr = sess.checkIn || '—';
+                            const outStr = sess.checkOut || 'Active (Ongoing)';
+                            const isOpen = !sess.checkOut;
+
+                            return (
+                                <div
+                                    key={idx}
+                                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
+                                        isOpen
+                                            ? 'bg-emerald-50/60 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
+                                            : 'bg-slate-50/60 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white'
+                                    }`}
+                                >
+                                    <div>
+                                        <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-1">
+                                            Session #{idx + 1}
+                                        </div>
+                                        <div className="text-xs font-mono font-extrabold flex items-center gap-2">
+                                            <span>{inStr}</span>
+                                            <span className="text-slate-400">→</span>
+                                            <span className={isOpen ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}>{outStr}</span>
+                                        </div>
+                                    </div>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                                        isOpen
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                                    }`}>
+                                        {isOpen ? 'ACTIVE' : 'COMPLETED'}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
             {/* Leave Balances Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-2">
@@ -262,49 +333,114 @@ export default function AttendanceTab() {
                                 <th className="py-4 px-6">Check Out</th>
                                 <th className="py-4 px-6">Total Hours</th>
                                 <th className="py-4 px-6">Status</th>
+                                <th className="py-4 px-6 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300">
                             {isLoadingHistory ? (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-slate-400 font-semibold">
+                                    <td colSpan={6} className="py-12 text-center text-slate-400 font-semibold">
                                         Loading attendance logs from database…
                                     </td>
                                 </tr>
                             ) : isErrorHistory ? (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-rose-500 font-semibold">
+                                    <td colSpan={6} className="py-12 text-center text-rose-500 font-semibold">
                                         Failed to load attendance history.
                                     </td>
                                 </tr>
                             ) : historyLogs.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-slate-400 font-semibold">
+                                    <td colSpan={6} className="py-12 text-center text-slate-400 font-semibold">
                                         No attendance logs recorded yet. Click &quot;Check In&quot; above to log shift arrival.
                                     </td>
                                 </tr>
                             ) : (
-                                historyLogs.map((log: any) => (
-                                    <tr key={log.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
-                                        <td className="py-4 px-6 font-bold text-slate-900 dark:text-white">{log.date}</td>
-                                        <td className="py-4 px-6 font-mono text-slate-700 dark:text-slate-300">{log.checkIn}</td>
-                                        <td className="py-4 px-6 font-mono text-slate-700 dark:text-slate-300">{log.checkOut}</td>
-                                        <td className="py-4 px-6 font-bold text-slate-800 dark:text-slate-200">{log.hours}</td>
-                                        <td className="py-4 px-6">
-                                            <span
-                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold capitalize ${
-                                                    log.status === 'present'
-                                                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200'
-                                                        : log.status === 'late'
-                                                        ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200'
-                                                        : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200'
-                                                }`}
-                                            >
-                                                {log.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))
+                                historyLogs.map((log: any) => {
+                                    const isExpanded = Boolean(expandedRows[log.id]);
+                                    const sessions = log.sessions && log.sessions.length > 0 ? log.sessions : [
+                                        { checkIn: log.checkIn || '—', checkOut: log.checkOut || null }
+                                    ];
+                                    const firstSession = sessions[0];
+                                    const lastSession = sessions[sessions.length - 1];
+
+                                    const firstCheckInStr = firstSession?.checkIn || log.checkIn || '—';
+                                    const lastCheckOutStr = lastSession?.checkOut || (sessions.length > 1 && !lastSession?.checkOut ? 'Active' : (log.checkOut || '—'));
+
+                                    return (
+                                        <React.Fragment key={log.id}>
+                                            <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
+                                                <td className="py-4 px-6 font-bold text-slate-900 dark:text-white">{log.date}</td>
+                                                <td className="py-4 px-6 font-mono text-slate-700 dark:text-slate-300 font-bold">{firstCheckInStr}</td>
+                                                <td className="py-4 px-6 font-mono text-slate-700 dark:text-slate-300">{lastCheckOutStr}</td>
+                                                <td className="py-4 px-6 font-bold text-slate-800 dark:text-slate-200">{log.hours}</td>
+                                                <td className="py-4 px-6">
+                                                    <span
+                                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold capitalize ${
+                                                            log.status === 'present'
+                                                                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200'
+                                                                : log.status === 'late'
+                                                                ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200'
+                                                                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200'
+                                                        }`}
+                                                    >
+                                                        {log.status}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-6 text-center">
+                                                    <button
+                                                        onClick={() => toggleRowExpand(log.id)}
+                                                        className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                                                        title={isExpanded ? 'Collapse sessions' : 'Expand session details'}
+                                                    >
+                                                        {isExpanded ? <FiChevronUp size={15} /> : <FiChevronDown size={15} />}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {isExpanded && (
+                                                <tr className="bg-slate-50/50 dark:bg-slate-800/40">
+                                                    <td colSpan={6} className="p-4 border-b border-slate-100 dark:border-slate-800">
+                                                        <div className="space-y-2.5">
+                                                            <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                                                All Check In &amp; Check Out Sessions for {log.date} ({sessions.length})
+                                                            </div>
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                                                {sessions.map((sess: any, idx: number) => {
+                                                                    const inStr = sess.checkIn || '—';
+                                                                    const outStr = sess.checkOut || 'Active';
+                                                                    const isOpen = !sess.checkOut || sess.checkOut === 'Active';
+
+                                                                    return (
+                                                                        <div
+                                                                            key={idx}
+                                                                            className={`p-3 rounded-2xl border text-xs flex items-center justify-between font-mono ${
+                                                                                isOpen
+                                                                                    ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
+                                                                                    : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                                                                            }`}
+                                                                        >
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="text-[10px] font-sans font-bold text-slate-400">Session #{idx + 1}</span>
+                                                                                <span className="font-bold">{inStr}</span>
+                                                                                <span className="text-slate-400">→</span>
+                                                                                <span className={isOpen ? 'font-bold text-emerald-600 dark:text-emerald-400' : ''}>{outStr}</span>
+                                                                            </div>
+                                                                            <span className={`text-[10px] font-sans font-extrabold px-2 py-0.5 rounded-full ${
+                                                                                isOpen ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                                                            }`}>
+                                                                                {isOpen ? 'ACTIVE' : 'COMPLETED'}
+                                                                            </span>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>

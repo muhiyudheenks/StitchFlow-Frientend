@@ -1,6 +1,5 @@
 import {
     FiGrid,
-    FiUserPlus,
     FiUsers,
     FiUserCheck,
     FiCpu,
@@ -23,7 +22,6 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: FiGrid },
-    { id: 'users', label: 'User Management', icon: FiUserPlus, badge: 'New' },
     { id: 'employees', label: 'Employees', icon: FiUsers, badge: '340' },
     { id: 'managers', label: 'Managers', icon: FiUserCheck, badge: '18' },
     { id: 'production', label: 'Production', icon: FiCpu, badge: 'Live' },

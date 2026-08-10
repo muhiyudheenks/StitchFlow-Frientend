@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import OverviewTab from './OverviewTab';
-import UserManagementTab from './UserManagementTab';
 import EmployeesTab from './EmployeesTab';
 import ManagersTab from './ManagersTab';
 import SupportTicketsTab from './SupportTicketsTab';
@@ -66,8 +65,6 @@ export default function AdminDashboard({ initialTab = 'dashboard' }: AdminDashbo
                         overviewData={overviewData}
                     />
                 );
-            case 'users':
-                return <UserManagementTab />;
             case 'employees':
                 return <EmployeesTab onOpenQuickAction={handleOpenQuickAction} />;
             case 'managers':

@@ -14,6 +14,7 @@ import {
     FiAlertCircle,
     FiMail,
     FiEdit3,
+    FiTrash2,
     FiX
 } from 'react-icons/fi';
 import { useEmployees } from '../hooks/useEmployees';
@@ -136,6 +137,23 @@ export default function EmployeesTab({ onOpenQuickAction }: EmployeesTabProps) {
         },
         onError: (err: any) => {
             setFormError(err.response?.data?.message || err.message || 'Failed to update employee');
+        },
+    });
+
+    // Delete Employee Mutation
+    const deleteEmployeeMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const res = await api.delete(`/api/admin/employees/${id}`);
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-employees'] });
+            setResendSuccessMsg('Employee deleted successfully!');
+            setTimeout(() => setResendSuccessMsg(null), 4000);
+        },
+        onError: (err: any) => {
+            setResendErrorMsg(err.response?.data?.message || 'Failed to delete employee');
+            setTimeout(() => setResendErrorMsg(null), 4000);
         },
     });
 
@@ -436,6 +454,17 @@ export default function EmployeesTab({ onOpenQuickAction }: EmployeesTabProps) {
                                                         title="Edit Employee"
                                                     >
                                                         <FiEdit3 size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (window.confirm(`Are you sure you want to delete employee "${displayName}"?`)) {
+                                                                deleteEmployeeMutation.mutate(emp.id || (emp as any)._id);
+                                                            }
+                                                        }}
+                                                        className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 text-rose-600 dark:text-rose-400 font-bold transition-colors cursor-pointer"
+                                                        title="Delete Employee"
+                                                    >
+                                                        <FiTrash2 size={14} />
                                                     </button>
                                                     {!emp.isVerified && (
                                                         <button

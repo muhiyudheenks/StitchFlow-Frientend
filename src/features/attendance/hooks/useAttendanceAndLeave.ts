@@ -11,6 +11,7 @@ export interface TodayAttendanceData {
     overtimeHours?: number;
     status: string;
     attendancePercentage: number;
+    sessions?: Array<{ checkIn: string; checkOut: string | null; checkInTime?: Date; checkOutTime?: Date | null }>;
 }
 
 const TODAY_KEY = ['employee-attendance-today'];
@@ -74,6 +75,8 @@ export function useCheckIn() {
             queryClient.invalidateQueries({ queryKey: TODAY_KEY });
             queryClient.invalidateQueries({ queryKey: HISTORY_KEY });
             queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
+            queryClient.invalidateQueries({ queryKey: ['admin-attendance-today'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-analytics-summary'] });
         },
         onError: (_err, _vars, context: any) => {
             if (context?.previous !== undefined) {
@@ -102,6 +105,8 @@ export function useCheckOut() {
             queryClient.invalidateQueries({ queryKey: TODAY_KEY });
             queryClient.invalidateQueries({ queryKey: HISTORY_KEY });
             queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
+            queryClient.invalidateQueries({ queryKey: ['admin-attendance-today'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-analytics-summary'] });
         },
         onError: (_err, _vars, context: any) => {
             if (context?.previous !== undefined) {

@@ -22,6 +22,7 @@ import {
     FiDownload,
     FiEye,
     FiX,
+    FiRotateCcw,
 } from 'react-icons/fi';
 
 export default function SupportTab() {
@@ -113,6 +114,26 @@ export default function SupportTab() {
         queryFn: async () => {
             const res = await api.get('/api/support/documents');
             return res.data?.data || [];
+        },
+    });
+
+    // User Status Transition Mutation (Confirm Resolved -> CLOSED or Reopen -> IN_PROGRESS)
+    const updateTicketStatusMutation = useMutation({
+        mutationFn: async ({ ticketId, action }: { ticketId: string; action: 'confirm' | 'reopen' }) => {
+            const res = await api.patch(`/api/support/my-tickets/${ticketId}/status`, { action });
+            return res.data;
+        },
+        onSuccess: (data, variables) => {
+            const msg = variables.action === 'confirm'
+                ? 'Issue confirmed as solved! Ticket is now CLOSED.'
+                : 'Ticket reopened and returned to Admin for investigation.';
+            setSuccessToast(msg);
+            setSelectedTicket(null);
+            queryClient.invalidateQueries({ queryKey: ['employee-my-tickets'] });
+            setTimeout(() => setSuccessToast(null), 4000);
+        },
+        onError: (err: any) => {
+            setErrorMsg(err.response?.data?.message || 'Failed to update ticket status.');
         },
     });
 
@@ -454,13 +475,35 @@ export default function SupportTab() {
                                             </td>
                                             <td className="py-3.5 px-3 text-slate-400 text-[11px] font-mono">{t.createdAt}</td>
                                             <td className="py-3.5 px-3">
-                                                <button
-                                                    onClick={() => setSelectedTicket(t)}
-                                                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-purple-100 text-slate-600 dark:text-slate-300 hover:text-purple-600 transition-colors"
-                                                    title="View Details"
-                                                >
-                                                    <FiEye size={14} />
-                                                </button>
+                                                <div className="flex items-center gap-1.5">
+                                                    <button
+                                                        onClick={() => setSelectedTicket(t)}
+                                                        className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-purple-100 text-slate-600 dark:text-slate-300 hover:text-purple-600 transition-colors"
+                                                        title="View Details"
+                                                    >
+                                                        <FiEye size={14} />
+                                                    </button>
+                                                    {t.status === 'RESOLVED' && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => updateTicketStatusMutation.mutate({ ticketId: t.id, action: 'confirm' })}
+                                                                disabled={updateTicketStatusMutation.isPending}
+                                                                className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 text-emerald-700 dark:text-emerald-300 transition-colors cursor-pointer"
+                                                                title="Confirm Issue Resolved (Mark CLOSED)"
+                                                            >
+                                                                <FiCheckCircle size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => updateTicketStatusMutation.mutate({ ticketId: t.id, action: 'reopen' })}
+                                                                disabled={updateTicketStatusMutation.isPending}
+                                                                className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 text-amber-700 dark:text-amber-300 transition-colors cursor-pointer"
+                                                                title="Reopen Ticket (Mark IN_PROGRESS)"
+                                                            >
+                                                                <FiRotateCcw size={14} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -601,6 +644,37 @@ export default function SupportTab() {
                                     <span className="font-bold text-emerald-600 dark:text-emerald-400 block mb-1">Admin Resolution Response:</span>
                                     <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 leading-relaxed border border-emerald-200">
                                         {selectedTicket.resolution}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Lifecycle confirmation block when ticket is RESOLVED */}
+                            {selectedTicket.status === 'RESOLVED' && (
+                                <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/50 space-y-3">
+                                    <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-extrabold text-xs">
+                                        <FiCheckCircle size={16} />
+                                        <span>Issue Marked as RESOLVED by Admin</span>
+                                    </div>
+                                    <p className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium leading-relaxed">
+                                        Is your issue completely solved? Please click <strong>Confirm Issue Resolved</strong> to close this ticket, or click <strong>Reopen Ticket</strong> if you need further assistance.
+                                    </p>
+                                    <div className="flex items-center gap-2 pt-1">
+                                        <button
+                                            onClick={() => updateTicketStatusMutation.mutate({ ticketId: selectedTicket.id, action: 'confirm' })}
+                                            disabled={updateTicketStatusMutation.isPending}
+                                            className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+                                        >
+                                            <FiCheckCircle size={14} />
+                                            <span>{updateTicketStatusMutation.isPending ? 'Confirming...' : 'Confirm Issue Resolved'}</span>
+                                        </button>
+                                        <button
+                                            onClick={() => updateTicketStatusMutation.mutate({ ticketId: selectedTicket.id, action: 'reopen' })}
+                                            disabled={updateTicketStatusMutation.isPending}
+                                            className="py-2.5 px-3 rounded-xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/80 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-200 font-extrabold text-xs flex items-center justify-center gap-1.5 border border-amber-300 dark:border-amber-800 cursor-pointer transition-colors"
+                                        >
+                                            <FiRotateCcw size={14} />
+                                            <span>Reopen Ticket</span>
+                                        </button>
                                     </div>
                                 </div>
                             )}

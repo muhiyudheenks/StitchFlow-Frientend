@@ -95,8 +95,12 @@ export default function SupportTicketsTab() {
         onSuccess: () => {
             setToastMsg('Support ticket updated & user notified!');
             setSelectedTicket(null);
+            setModalError(null);
             queryClient.invalidateQueries({ queryKey: ['admin-support-tickets'] });
             setTimeout(() => setToastMsg(null), 3000);
+        },
+        onError: (err: any) => {
+            setModalError(err.response?.data?.message || 'Failed to update support ticket.');
         },
     });
 
@@ -152,18 +156,34 @@ export default function SupportTicketsTab() {
         },
     });
 
+    const [modalError, setModalError] = useState<string | null>(null);
+
     const handleSelectTicketToInspect = (t: any) => {
         setSelectedTicket(t);
         setEditStatus(t.status || 'OPEN');
         setResolutionText(t.resolution || '');
         setInternalNotesText(t.internalNotes || '');
+        setModalError(null);
     };
 
     const handleSaveTicketUpdate = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedTicket) return;
+        setModalError(null);
+
+        if (editStatus === 'RESOLVED' && !resolutionText.trim()) {
+            setModalError('Resolution response is required when setting status to RESOLVED.');
+            return;
+        }
+
+        if (editStatus === 'CLOSED' && selectedTicket.status !== 'CLOSED') {
+            setModalError('Only the ticket creator can confirm resolution to mark ticket as CLOSED.');
+            return;
+        }
+
+        const tId = selectedTicket.id || selectedTicket._id;
         updateTicketMutation.mutate({
-            ticketId: selectedTicket.id,
+            ticketId: tId,
             payload: {
                 status: editStatus,
                 resolution: resolutionText.trim(),
@@ -490,6 +510,13 @@ export default function SupportTicketsTab() {
                         </div>
 
                         <form onSubmit={handleSaveTicketUpdate} className="space-y-4 text-xs font-medium">
+                            {modalError && (
+                                <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 text-rose-600 font-bold text-xs flex items-center gap-2">
+                                    <FiAlertCircle size={16} />
+                                    <span>{modalError}</span>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl">
                                 <div>
                                     <span className="text-slate-400 font-bold block">Logged By:</span>
@@ -516,10 +543,12 @@ export default function SupportTicketsTab() {
                                     onChange={(e) => setEditStatus(e.target.value)}
                                     className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold"
                                 >
-                                    <option value="OPEN">OPEN</option>
-                                    <option value="IN_PROGRESS">IN_PROGRESS</option>
-                                    <option value="RESOLVED">RESOLVED</option>
-                                    <option value="CLOSED">CLOSED</option>
+                                    <option value="OPEN">OPEN (Under Review)</option>
+                                    <option value="IN_PROGRESS">IN_PROGRESS (Investigating)</option>
+                                    <option value="RESOLVED">RESOLVED (Issue Fixed - Requires Resolution Response)</option>
+                                    {selectedTicket.status === 'CLOSED' && (
+                                        <option value="CLOSED" disabled>CLOSED (Confirmed by Creator)</option>
+                                    )}
                                 </select>
                             </div>
 
