@@ -7,13 +7,14 @@ import Header from './Header';
 import OverviewTab from './OverviewTab';
 import ProfileTab from './ProfileTab';
 import TasksTab from './TasksTab';
-import PerformanceTab from './PerformanceTab';
-import SalaryTab from './SalaryTab';
 import NotificationsTab from './NotificationsTab';
 import SupportTab from './SupportTab';
 import { EmployeeTab } from '../types';
 import { EmployeeAttendanceTab } from '@/features/attendance';
 import { EmployeeProductionTab } from '@/features/production';
+
+// ProfileSubTab: which section inside the Profile page to show
+export type ProfileSubTab = 'overview' | 'performance' | 'salary';
 
 interface EmployeeDashboardProps {
     initialTab?: EmployeeTab;
@@ -21,26 +22,43 @@ interface EmployeeDashboardProps {
 
 export default function EmployeeDashboard({ initialTab = 'dashboard' }: EmployeeDashboardProps) {
     const router = useRouter();
-    const effectiveInitialTab = initialTab === ('leave' as any) ? 'attendance' : initialTab;
-    const [activeTab, setActiveTabState] = useState<EmployeeTab>(effectiveInitialTab);
+
+    // Map 'performance' and 'salary' tabs into the profile page with the correct sub-tab
+    const resolveTab = (tab: EmployeeTab | string): { tab: EmployeeTab; profileSubTab: ProfileSubTab } => {
+        if (tab === 'performance') return { tab: 'profile', profileSubTab: 'performance' };
+        if (tab === 'salary')      return { tab: 'profile', profileSubTab: 'salary' };
+        if (tab === 'leave')       return { tab: 'attendance', profileSubTab: 'overview' };
+        return { tab: tab as EmployeeTab, profileSubTab: 'overview' };
+    };
+
+    const initial = resolveTab(initialTab);
+    const [activeTab, setActiveTabState] = useState<EmployeeTab>(initial.tab);
+    const [profileSubTab, setProfileSubTab] = useState<ProfileSubTab>(initial.profileSubTab);
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
 
     useEffect(() => {
-        if (initialTab) {
-            if ((initialTab as string) === 'leave') {
-                setActiveTabState('attendance');
-                router.replace('/dashboard/employee/attendance', { scroll: false });
-            } else {
-                setActiveTabState(initialTab);
-            }
+        const resolved = resolveTab(initialTab);
+        setActiveTabState(resolved.tab);
+        setProfileSubTab(resolved.profileSubTab);
+
+        // Canonicalize URL: redirect /performance and /salary to /profile
+        if (initialTab === 'performance' || initialTab === 'salary' || (initialTab as string) === 'leave') {
+            const canonicalRoute = resolved.tab === 'dashboard'
+                ? '/dashboard/employee'
+                : `/dashboard/employee/${resolved.tab}`;
+            router.replace(canonicalRoute, { scroll: false });
         }
-    }, [initialTab, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialTab]);
 
     const setActiveTab = (tab: EmployeeTab) => {
-        const targetTab = (tab as string) === 'leave' ? 'attendance' : tab;
-        setActiveTabState(targetTab);
-        const targetRoute = targetTab === 'dashboard' ? '/dashboard/employee' : `/dashboard/employee/${targetTab}`;
+        const resolved = resolveTab(tab);
+        setActiveTabState(resolved.tab);
+        setProfileSubTab(resolved.profileSubTab);
+        const targetRoute = resolved.tab === 'dashboard'
+            ? '/dashboard/employee'
+            : `/dashboard/employee/${resolved.tab}`;
         router.push(targetRoute, { scroll: false });
     };
 
@@ -49,17 +67,18 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
             case 'dashboard':
                 return <OverviewTab onNavigateTab={setActiveTab} />;
             case 'profile':
-                return <ProfileTab />;
+                return (
+                    <ProfileTab
+                        initialSubTab={profileSubTab}
+                        onSubTabChange={setProfileSubTab}
+                    />
+                );
             case 'tasks':
                 return <TasksTab />;
             case 'attendance':
                 return <EmployeeAttendanceTab />;
             case 'production':
                 return <EmployeeProductionTab />;
-            case 'performance':
-                return <PerformanceTab />;
-            case 'salary':
-                return <SalaryTab />;
             case 'notifications':
                 return <NotificationsTab onNavigateTab={setActiveTab} />;
             case 'support':

@@ -142,9 +142,13 @@ export default function TasksTab() {
     };
 
     const getTaskCategory = (statusStr: string) => {
-        const s = (statusStr || '').toLowerCase().replace(/_/g, ' ').trim();
-        if (s === 'in progress') return 'In Progress';
-        if (s === 'completed' || s === 'under review' || s === 'rejected') return 'Completed';
+        const s = (statusStr || '').trim();
+        // Pending: not started yet
+        if (s === 'Pending') return 'Pending';
+        // In Progress: actively being worked on, OR Rejected (returned for rework)
+        if (s === 'In Progress' || s === 'Rejected') return 'In Progress';
+        // Completed / Needs Review: fully done and awaiting verification, OR already verified
+        if (s === 'Under Review' || s === 'Verified' || s === 'Completed') return 'Completed';
         return 'Pending';
     };
 
@@ -298,13 +302,36 @@ export default function TasksTab() {
                                                         <FiUser size={12} className="text-purple-600" />
                                                         <span>{t.assignedEmployeeName || t.assignedToName || 'Unassigned'}</span>
                                                     </div>
-                                                    <span className="font-mono text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                                                        {t.completedQuantity || 0} / {t.targetQuantity || 100} pcs
-                                                    </span>
                                                 </div>
 
-                                                {/* Manager Verification Actions */}
-                                                {(t.status === 'Under Review' || t.status === 'under_review' || (t.status === 'Completed' && !t.verifiedByManager)) && (
+                                                {/* Real progress display for all tasks */}
+                                                {(() => {
+                                                    const targetQty    = Number(t.targetQuantity ?? 0);
+                                                    const completedQty = Number(t.completedQuantity ?? 0);
+                                                    const progressPct  = targetQty > 0 ? Math.min(100, Math.round((completedQty / targetQty) * 100)) : 0;
+                                                    const isFullyDone  = completedQty >= targetQty && targetQty > 0;
+                                                    return (
+                                                        <div className="space-y-1.5 pt-1">
+                                                            <div className="flex items-center justify-between text-[10px] font-bold">
+                                                                <span className="font-mono text-slate-600 dark:text-slate-400">
+                                                                    {completedQty} / {targetQty} pcs
+                                                                </span>
+                                                                <span className={`font-extrabold ${isFullyDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-purple-600 dark:text-purple-400'}`}>
+                                                                    {progressPct}% Complete
+                                                                </span>
+                                                            </div>
+                                                            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className={`h-full rounded-full transition-all duration-300 ${isFullyDone ? 'bg-emerald-500' : 'bg-purple-600'}`}
+                                                                    style={{ width: `${progressPct}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+
+                                                {/* Manager Verification Actions — only when Under Review */}
+                                                {t.status === 'Under Review' && (
                                                     <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800">
                                                         <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                                                             Review Required
@@ -322,7 +349,7 @@ export default function TasksTab() {
                                                                 onClick={() => verifyTaskMutation.mutate({ taskId: t.id || t._id, status: 'Rejected' })}
                                                                 disabled={verifyTaskMutation.isPending}
                                                                 className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
-                                                                title="Reject & Reassign"
+                                                                title="Reject & Return for Rework"
                                                             >
                                                                 <FiThumbsDown size={11} /> Reject
                                                             </button>

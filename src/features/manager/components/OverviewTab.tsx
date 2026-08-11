@@ -40,12 +40,7 @@ export default function OverviewTab({ onNavigateTab, onOpenQuickAction }: Overvi
         inventoryAlerts: 3,
     };
 
-    const lines = overviewData?.productionLines || [
-        { id: '1', name: 'Assembly Line A', completedPcs: 1420, targetPcs: 1800, efficiency: 84, leader: 'David Miller' },
-        { id: '2', name: 'Cutting & Laying', completedPcs: 1200, targetPcs: 1400, efficiency: 91, leader: 'Sarah Jenkins' },
-        { id: '3', name: 'Denim Outerwear Line', completedPcs: 850, targetPcs: 1000, efficiency: 85, leader: 'Robert Vance' },
-        { id: '4', name: 'Quality Control Line', completedPcs: 370, targetPcs: 800, efficiency: 78, leader: 'Elena Rostova' },
-    ];
+    const lines = overviewData?.productionBatches || overviewData?.productionLines || [];
 
     const activities = overviewData?.recentActivity || [
         { id: '1', title: 'Batch #BT-9042 Completed', description: 'Assembly Line A finished 1,200 Denim Jacket units.', time: '20 mins ago' },
@@ -89,12 +84,12 @@ export default function OverviewTab({ onNavigateTab, onOpenQuickAction }: Overvi
                         </div>
                     </div>
                     <div className="text-2xl font-extrabold text-slate-900">
-                        {isLoading ? '...' : metrics.todayProduction.toLocaleString()} <span className="text-xs font-semibold text-slate-400">pcs</span>
+                        {isLoading ? '...' : (metrics.todayProduction || 0).toLocaleString()} <span className="text-xs font-semibold text-slate-400">pcs</span>
                     </div>
                     <div className="mt-2 flex items-center justify-between text-[11px] font-bold text-slate-500">
-                        <span>Target: {metrics.targetProduction.toLocaleString()} pcs</span>
+                        <span>Target: {(metrics.targetProduction || 0).toLocaleString()} pcs</span>
                         <span className="text-emerald-600 flex items-center gap-0.5">
-                            <FiArrowUpRight /> {metrics.efficiencyRate}%
+                            <FiArrowUpRight /> {metrics.efficiencyRate || 0}%
                         </span>
                     </div>
                 </div>
@@ -108,7 +103,7 @@ export default function OverviewTab({ onNavigateTab, onOpenQuickAction }: Overvi
                         </div>
                     </div>
                     <div className="text-2xl font-extrabold text-slate-900">
-                        {isLoading ? '...' : `${metrics.activeEmployees} / ${metrics.totalEmployees}`}
+                        {isLoading ? '...' : `${metrics.activeEmployees || 0} / ${metrics.totalEmployees || 0}`}
                     </div>
                     <div className="mt-2 flex items-center justify-between text-[11px] font-bold text-slate-500">
                         <span>On Shift Right Now</span>
@@ -127,7 +122,7 @@ export default function OverviewTab({ onNavigateTab, onOpenQuickAction }: Overvi
                         </div>
                     </div>
                     <div className="text-2xl font-extrabold text-slate-900">
-                        {isLoading ? '...' : metrics.pendingApprovals}
+                        {isLoading ? '...' : (metrics.pendingApprovals || 0)}
                     </div>
                     <div className="mt-2 flex items-center justify-between text-[11px] font-bold text-slate-500">
                         <span>Leaves &amp; Tasks Pending</span>
@@ -146,7 +141,7 @@ export default function OverviewTab({ onNavigateTab, onOpenQuickAction }: Overvi
                         </div>
                     </div>
                     <div className="text-2xl font-extrabold text-slate-900">
-                        {isLoading ? '...' : metrics.inventoryAlerts} <span className="text-xs font-semibold text-rose-500">Alerts</span>
+                        {isLoading ? '...' : (metrics.inventoryAlerts || 0)} <span className="text-xs font-semibold text-rose-500">Alerts</span>
                     </div>
                     <div className="mt-2 flex items-center justify-between text-[11px] font-bold text-slate-500">
                         <span>Low Fabric &amp; Trims</span>
@@ -171,27 +166,40 @@ export default function OverviewTab({ onNavigateTab, onOpenQuickAction }: Overvi
                     </div>
 
                     <div className="space-y-4">
-                        {lines.map((line: any) => {
-                            const pct = Math.round((line.completedPcs / line.targetPcs) * 100);
-                            return (
-                                <div key={line.id} className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 space-y-2">
-                                    <div className="flex items-center justify-between text-xs font-bold text-slate-800">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                                            <span>{line.name}</span>
-                                            <span className="text-[11px] font-normal text-slate-400">({line.leader})</span>
+                        {isLoading ? (
+                            <div className="p-8 text-center text-xs font-semibold text-slate-400">Loading active production lines...</div>
+                        ) : lines.length === 0 ? (
+                            <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl">
+                                <p className="text-xs text-slate-500 font-semibold">No active production lines currently assigned.</p>
+                            </div>
+                        ) : (
+                            lines.map((line: any) => {
+                                const completedPcs = line.completedPcs ?? line.completedQuantity ?? 0;
+                                const targetPcs = line.targetPcs ?? line.targetQuantity ?? 1;
+                                const pct = targetPcs > 0 ? Math.min(100, Math.round((completedPcs / targetPcs) * 100)) : 0;
+                                const leader = line.leader || line.managerName || 'Production Leader';
+                                const lineName = line.name || line.batchName || 'Production Batch';
+
+                                return (
+                                    <div key={line.id || line._id} className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 space-y-2">
+                                        <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span>{lineName}</span>
+                                                <span className="text-[11px] font-normal text-slate-400">({leader})</span>
+                                            </div>
+                                            <span>{completedPcs.toLocaleString()} / {targetPcs.toLocaleString()} pcs ({pct}%)</span>
                                         </div>
-                                        <span>{line.completedPcs.toLocaleString()} / {line.targetPcs.toLocaleString()} pcs ({pct}%)</span>
+                                        <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                                                style={{ width: `${Math.min(pct, 100)}%` }}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-indigo-600 rounded-full transition-all duration-500"
-                                            style={{ width: `${Math.min(pct, 100)}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })
+                        )}
                     </div>
                 </div>
 

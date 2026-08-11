@@ -22,6 +22,7 @@ export interface BatchTaskData {
     assignedToName?: string;
     taskType: 'Stitching' | 'Finishing' | 'General';
     quantity: number;
+    targetQuantity?: number;
     completedQuantity: number;
     startDate?: string;
     dueDate?: string;
@@ -29,6 +30,7 @@ export interface BatchTaskData {
     priority: 'Low' | 'Medium' | 'High' | 'Urgent';
     status: 'Pending' | 'In Progress' | 'Quality Check' | 'Completed' | 'Verified' | string;
     instructions?: string;
+    addedToInventory?: boolean;
 }
 
 export interface ProductionBatchData {
@@ -90,6 +92,10 @@ export const productionService = {
     },
     deleteBatchTask: async (taskId: string) => {
         const response = await api.delete(`/api/production/tasks/${taskId}`);
+        return response.data;
+    },
+    addToInventoryTask: async (taskId: string) => {
+        const response = await api.post(`/api/production/tasks/${taskId}/inventory`);
         return response.data;
     },
 };

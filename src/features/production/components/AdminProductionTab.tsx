@@ -28,7 +28,7 @@ interface ProductionTabProps {
 
 export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps) {
     const { data: batches = [], isLoading: isLoadingBatches } = useProductionBatches();
-    const { createBatch, updateBatch, createBatchTask, updateBatchTask, deleteBatchTask } = useProductionMutations();
+    const { createBatch, updateBatch, createBatchTask, updateBatchTask, deleteBatchTask, addToInventoryTask } = useProductionMutations();
     const { data: managers = [], isLoading: isLoadingManagers, isError: isErrorManagers, error: managersError } = useManagers();
 
     // Debug log managers length
@@ -429,7 +429,7 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                                                         </span>
                                                     </td>
                                                     <td className="py-4 px-6 font-mono font-extrabold">
-                                                        {task.completedQuantity || 0} / {task.quantity} Pcs
+                                                        {task.completedQuantity || 0} / {task.quantity || task.targetQuantity || 100} Pcs
                                                     </td>
                                                     <td className="py-4 px-6">
                                                         <span className="font-semibold block">{task.estimatedDuration || '4 hrs'}</span>
@@ -458,26 +458,52 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                                                     </td>
                                                     <td className="py-4 px-6 text-right">
                                                         <div className="flex items-center justify-end gap-2">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setEditingTask(task);
-                                                                    setCreateTaskModalOpen(true);
-                                                                }}
-                                                                className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                                            >
-                                                                <FiEdit3 size={15} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    const taskId = task.id || task._id;
-                                                                    if (taskId && confirm('Delete this task assignment?')) {
-                                                                        deleteBatchTask.mutate(taskId);
-                                                                    }
-                                                                }}
-                                                                className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                                            >
-                                                                <FiTrash2 size={15} />
-                                                            </button>
+                                                            {isCompleted ? (
+                                                                task.addedToInventory ? (
+                                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold text-xs border border-slate-200 dark:border-slate-700">
+                                                                        <FiCheckCircle size={14} /> Added to Inventory
+                                                                    </span>
+                                                                ) : (
+                                                                    <button
+                                                                        disabled={task.completedQuantity !== (task.quantity || task.targetQuantity) || addToInventoryTask.isPending}
+                                                                        onClick={() => {
+                                                                            const taskId = task.id || task._id;
+                                                                            if (taskId) {
+                                                                                addToInventoryTask.mutate(taskId, {
+                                                                                    onSuccess: () => showSuccessToast('Added to inventory successfully!'),
+                                                                                    onError: () => setFormErrorMessage('Failed to add to inventory')
+                                                                                });
+                                                                            }
+                                                                        }}
+                                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 font-bold text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-purple-200 dark:border-purple-800"
+                                                                    >
+                                                                        <FiPlus size={14} /> Add to Inventory
+                                                                    </button>
+                                                                )
+                                                            ) : (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setEditingTask(task);
+                                                                            setCreateTaskModalOpen(true);
+                                                                        }}
+                                                                        className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                                    >
+                                                                        <FiEdit3 size={15} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const taskId = task.id || task._id;
+                                                                            if (taskId && confirm('Delete this task assignment?')) {
+                                                                                deleteBatchTask.mutate(taskId);
+                                                                            }
+                                                                        }}
+                                                                        className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                                    >
+                                                                        <FiTrash2 size={15} />
+                                                                    </button>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>

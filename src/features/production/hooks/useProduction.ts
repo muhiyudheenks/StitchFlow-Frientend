@@ -63,5 +63,10 @@ export function useProductionMutations() {
         onSuccess: invalidateAll,
     });
 
-    return { createBatch, updateBatch, updateBatchTeam, deleteBatch, createBatchTask, updateBatchTask, deleteBatchTask };
+    const addToInventoryTask = useMutation({
+        mutationFn: (taskId: string) => productionService.addToInventoryTask(taskId),
+        onSuccess: invalidateAll,
+    });
+
+    return { createBatch, updateBatch, updateBatchTeam, deleteBatch, createBatchTask, updateBatchTask, deleteBatchTask, addToInventoryTask };
 }
