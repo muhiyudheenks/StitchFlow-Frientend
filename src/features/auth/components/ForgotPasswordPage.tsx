@@ -60,15 +60,15 @@ export default function ForgotPasswordPage() {
         }`;
 
     return (
-        <div className="relative min-h-screen w-full flex bg-[#FAFAFC] overflow-hidden font-sans">
-            <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-purple-200/30 blur-[130px] pointer-events-none" />
-            <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[700px] h-[700px] rounded-full bg-indigo-100/40 blur-[150px] pointer-events-none" />
+        <div className="relative min-h-screen w-full flex bg-bg-light overflow-hidden font-sans">
+            <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-150 h-150 rounded-full bg-purple-200/30 blur-[130px] pointer-events-none" />
+            <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-175 h-175 rounded-full bg-indigo-100/40 blur-[150px] pointer-events-none" />
 
             <div className="relative z-10 flex w-full min-h-screen">
-                <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-12 lg:p-16 bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 text-white relative overflow-hidden border-r border-white/10">
+                <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-12 lg:p-16 bg-linear-to-br from-slate-900 via-indigo-950 to-purple-950 text-white relative overflow-hidden border-r border-white/10">
                     <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-purple-500/30 blur-[130px] pointer-events-none" />
                     <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-indigo-500/30 blur-[130px] pointer-events-none" />
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-size-[32px_32px] pointer-events-none" />
 
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}

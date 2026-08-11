@@ -26,8 +26,8 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
     // Map 'performance' and 'salary' tabs into the profile page with the correct sub-tab
     const resolveTab = (tab: EmployeeTab | string): { tab: EmployeeTab; profileSubTab: ProfileSubTab } => {
         if (tab === 'performance') return { tab: 'profile', profileSubTab: 'performance' };
-        if (tab === 'salary')      return { tab: 'profile', profileSubTab: 'salary' };
-        if (tab === 'leave')       return { tab: 'attendance', profileSubTab: 'overview' };
+        if (tab === 'salary') return { tab: 'profile', profileSubTab: 'salary' };
+        if (tab === 'leave') return { tab: 'attendance', profileSubTab: 'overview' };
         return { tab: tab as EmployeeTab, profileSubTab: 'overview' };
     };
 
@@ -49,7 +49,7 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
                 : `/dashboard/employee/${resolved.tab}`;
             router.replace(canonicalRoute, { scroll: false });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialTab]);
 
     const setActiveTab = (tab: EmployeeTab) => {
@@ -89,7 +89,7 @@ export default function EmployeeDashboard({ initialTab = 'dashboard' }: Employee
     };
 
     return (
-        <div className="flex min-h-screen bg-[#FAFAFC] dark:bg-[#090D16] font-sans antialiased text-slate-900 dark:text-slate-100 selection:bg-purple-500 selection:text-white transition-colors">
+        <div className="flex min-h-screen bg-bg-light dark:bg-[#090D16] font-sans antialiased text-slate-900 dark:text-slate-100 selection:bg-purple-500 selection:text-white transition-colors">
             {/* Employee Sidebar */}
             <Sidebar
                 activeTab={activeTab}
