@@ -58,7 +58,8 @@ export interface ProductionBatchData {
 export const productionService = {
     getBatches: async () => {
         const response = await api.get('/api/production');
-        return response.data?.data || [];
+        // Support both wrapped responses ({ data: [...] }) and direct arrays
+        return response.data?.data ?? response.data ?? [];
     },
     createBatch: async (data: CreateBatchPayload) => {
         const response = await api.post('/api/production', data);

@@ -138,7 +138,7 @@ export default function AttendanceTab() {
 
     return (
         <div className="space-y-6 font-sans">
-            {/* Action error banner */}
+            {/* Action or load error banner */}
             {actionError && (
                 <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-300 text-xs font-bold flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -148,6 +148,11 @@ export default function AttendanceTab() {
                     <button onClick={() => setActionError(null)} className="p-1 hover:bg-rose-100 dark:hover:bg-rose-900 rounded-lg">
                         <FiX size={14} />
                     </button>
+                </div>
+            )}
+            {isErrorToday && (
+                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-200 text-xs font-bold">
+                    Unable to load today&apos;s attendance. Please refresh the page or try again in a moment.
                 </div>
             )}
 
@@ -176,11 +181,10 @@ export default function AttendanceTab() {
                         <button
                             onClick={handleCheckInToggle}
                             disabled={!mounted || isToggling || isLoadingToday}
-                            className={`px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-60 ${
-                                isCheckedIn
+                            className={`px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-60 ${isCheckedIn
                                     ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20'
                                     : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
-                            }`}
+                                }`}
                         >
                             {isToggling ? (
                                 <span className="flex items-center gap-1.5"><FiRefreshCw className="animate-spin" size={14} /> <span>Updating…</span></span>
@@ -263,11 +267,10 @@ export default function AttendanceTab() {
                             return (
                                 <div
                                     key={idx}
-                                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
-                                        isOpen
+                                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${isOpen
                                             ? 'bg-emerald-50/60 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
                                             : 'bg-slate-50/60 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white'
-                                    }`}
+                                        }`}
                                 >
                                     <div>
                                         <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-1">
@@ -279,11 +282,10 @@ export default function AttendanceTab() {
                                             <span className={isOpen ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}>{outStr}</span>
                                         </div>
                                     </div>
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                                        isOpen
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${isOpen
                                             ? 'bg-emerald-600 text-white'
                                             : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                                    }`}>
+                                        }`}>
                                         {isOpen ? 'ACTIVE' : 'COMPLETED'}
                                     </span>
                                 </div>
@@ -376,13 +378,12 @@ export default function AttendanceTab() {
                                                 <td className="py-4 px-6 font-bold text-slate-800 dark:text-slate-200">{log.hours}</td>
                                                 <td className="py-4 px-6">
                                                     <span
-                                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold capitalize ${
-                                                            log.status === 'present'
+                                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold capitalize ${log.status === 'present'
                                                                 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200'
                                                                 : log.status === 'late'
-                                                                ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200'
-                                                                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200'
-                                                        }`}
+                                                                    ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200'
+                                                                    : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200'
+                                                            }`}
                                                     >
                                                         {log.status}
                                                     </span>
@@ -413,11 +414,10 @@ export default function AttendanceTab() {
                                                                     return (
                                                                         <div
                                                                             key={idx}
-                                                                            className={`p-3 rounded-2xl border text-xs flex items-center justify-between font-mono ${
-                                                                                isOpen
+                                                                            className={`p-3 rounded-2xl border text-xs flex items-center justify-between font-mono ${isOpen
                                                                                     ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
                                                                                     : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300'
-                                                                            }`}
+                                                                                }`}
                                                                         >
                                                                             <div className="flex items-center gap-2">
                                                                                 <span className="text-[10px] font-sans font-bold text-slate-400">Session #{idx + 1}</span>
@@ -425,9 +425,8 @@ export default function AttendanceTab() {
                                                                                 <span className="text-slate-400">→</span>
                                                                                 <span className={isOpen ? 'font-bold text-emerald-600 dark:text-emerald-400' : ''}>{outStr}</span>
                                                                             </div>
-                                                                            <span className={`text-[10px] font-sans font-extrabold px-2 py-0.5 rounded-full ${
-                                                                                isOpen ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                                                            }`}>
+                                                                            <span className={`text-[10px] font-sans font-extrabold px-2 py-0.5 rounded-full ${isOpen ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                                                                }`}>
                                                                                 {isOpen ? 'ACTIVE' : 'COMPLETED'}
                                                                             </span>
                                                                         </div>
@@ -466,13 +465,12 @@ export default function AttendanceTab() {
                                     <div className="flex items-center justify-between mb-2">
                                         <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">{req.leaveType}</h4>
                                         <span
-                                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold capitalize ${
-                                                req.status === 'approved'
+                                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold capitalize ${req.status === 'approved'
                                                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200'
                                                     : req.status === 'pending'
-                                                    ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200'
-                                                    : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200'
-                                            }`}
+                                                        ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200'
+                                                        : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200'
+                                                }`}
                                         >
                                             {req.status}
                                         </span>

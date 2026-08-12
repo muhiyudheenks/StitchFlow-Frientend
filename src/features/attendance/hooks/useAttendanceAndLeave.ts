@@ -22,8 +22,10 @@ export function useAttendance() {
     return useQuery<TodayAttendanceData>({
         queryKey: TODAY_KEY,
         queryFn: () => attendanceService.getTodayAttendance(),
-        refetchOnMount: true,
+        refetchOnMount: 'always',
+        refetchOnReconnect: true,
         staleTime: 0,
+        retry: false,
     });
 }
 

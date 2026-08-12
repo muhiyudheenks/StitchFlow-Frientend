@@ -29,6 +29,14 @@ const formatTime = (val?: string | Date | null): string => {
     }
 };
 
+const getTodayLocalDate = (): string => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 export default function AttendanceTab() {
     const queryClient = useQueryClient();
     const [activeSection, setActiveSection] = useState<'attendance' | 'leaves'>('attendance');
@@ -53,6 +61,13 @@ export default function AttendanceTab() {
             return response.data?.data || [];
         },
     });
+
+    const todayDate = getTodayLocalDate();
+    const todayAttendance = attendanceLogs.filter((log) => log.date === todayDate);
+    const presentToday = todayAttendance.filter((log) => log.status === 'present' || log.status === 'late').length;
+    const lateToday = todayAttendance.filter((log) => log.status === 'late').length;
+    const onLeaveToday = todayAttendance.filter((log) => log.status === 'on_leave').length;
+    const absentToday = todayAttendance.filter((log) => log.status === 'absent').length;
 
     const updateLeaveMutation = useMutation({
         mutationFn: async ({ leaveId, status }: { leaveId: string; status: 'approved' | 'rejected' }) => {
@@ -84,21 +99,19 @@ export default function AttendanceTab() {
                 <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
                     <button
                         onClick={() => setActiveSection('attendance')}
-                        className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                            activeSection === 'attendance'
+                        className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${activeSection === 'attendance'
                                 ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                        }`}
+                            }`}
                     >
                         Attendance Logs
                     </button>
                     <button
                         onClick={() => setActiveSection('leaves')}
-                        className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                            activeSection === 'leaves'
+                        className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${activeSection === 'leaves'
                                 ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                        }`}
+                            }`}
                     >
                         Leave Requests ({leaveRequests.filter(l => l.status === 'pending').length})
                     </button>
@@ -108,6 +121,28 @@ export default function AttendanceTab() {
             {/* Attendance Section */}
             {activeSection === 'attendance' && (
                 <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-6 border-b border-slate-200/80 dark:border-slate-800">
+                        <div className="rounded-3xl bg-slate-50 dark:bg-slate-950/70 p-5 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                            <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Present Today</div>
+                            <div className="text-3xl font-extrabold text-slate-900 dark:text-white">{presentToday}</div>
+                            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Employees checked in or on time</div>
+                        </div>
+                        <div className="rounded-3xl bg-slate-50 dark:bg-slate-950/70 p-5 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                            <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Late Today</div>
+                            <div className="text-3xl font-extrabold text-amber-600 dark:text-amber-300">{lateToday}</div>
+                            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Employees marked late for {todayDate}</div>
+                        </div>
+                        <div className="rounded-3xl bg-slate-50 dark:bg-slate-950/70 p-5 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                            <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">On Leave Today</div>
+                            <div className="text-3xl font-extrabold text-purple-700 dark:text-purple-300">{onLeaveToday}</div>
+                            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Approved leaves active today</div>
+                        </div>
+                        <div className="rounded-3xl bg-slate-50 dark:bg-slate-950/70 p-5 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                            <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Absent Today</div>
+                            <div className="text-3xl font-extrabold text-rose-600 dark:text-rose-300">{absentToday}</div>
+                            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Employees marked absent for {todayDate}</div>
+                        </div>
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -154,13 +189,12 @@ export default function AttendanceTab() {
                                                     <td className="py-4 px-6 font-mono text-slate-500 dark:text-slate-400">{lastCheckOutStr}</td>
                                                     <td className="py-4 px-6">
                                                         <span
-                                                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold capitalize ${
-                                                                log.status === 'present'
+                                                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold capitalize ${log.status === 'present'
                                                                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50'
                                                                     : log.status === 'late'
-                                                                    ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50'
-                                                                    : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50'
-                                                            }`}
+                                                                        ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50'
+                                                                        : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50'
+                                                                }`}
                                                         >
                                                             {log.status}
                                                         </span>
@@ -191,11 +225,10 @@ export default function AttendanceTab() {
                                                                         return (
                                                                             <div
                                                                                 key={idx}
-                                                                                className={`p-3 rounded-2xl border text-xs flex items-center justify-between font-mono ${
-                                                                                    isOpen
+                                                                                className={`p-3 rounded-2xl border text-xs flex items-center justify-between font-mono ${isOpen
                                                                                         ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
                                                                                         : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300'
-                                                                                }`}
+                                                                                    }`}
                                                                             >
                                                                                 <div className="flex items-center gap-2">
                                                                                     <span className="text-[10px] font-sans font-bold text-slate-400">Session #{idx + 1}</span>
@@ -203,9 +236,8 @@ export default function AttendanceTab() {
                                                                                     <span className="text-slate-400">→</span>
                                                                                     <span className={isOpen ? 'font-bold text-emerald-600 dark:text-emerald-400' : ''}>{isOpen ? 'Active' : outStr}</span>
                                                                                 </div>
-                                                                                <span className={`text-[10px] font-sans font-extrabold px-2 py-0.5 rounded-full ${
-                                                                                    isOpen ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                                                                }`}>
+                                                                                <span className={`text-[10px] font-sans font-extrabold px-2 py-0.5 rounded-full ${isOpen ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                                                                    }`}>
                                                                                     {isOpen ? 'ACTIVE' : 'COMPLETED'}
                                                                                 </span>
                                                                             </div>

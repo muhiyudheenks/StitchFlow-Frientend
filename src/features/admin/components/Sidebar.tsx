@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { navItems } from '../constants';
 import { AdminTab, OverviewCardsData } from '../types';
-import { NavItem } from '../constants';
 import Image from 'next/image';
 import { FiLayers, FiChevronLeft, FiChevronRight, FiLogOut, FiX } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
@@ -48,7 +47,6 @@ export default function Sidebar({
             }
         }
     }, []);
-    console.log("users1", localUser)
 
     const user = reduxUser || localUser;
     const adminName = user?.fullName || 'Admin User';

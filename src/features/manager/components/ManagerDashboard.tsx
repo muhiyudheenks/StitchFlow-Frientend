@@ -13,7 +13,7 @@ import { ManagerTab } from '../types';
 import { FiX, FiCheckSquare } from 'react-icons/fi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/config';
-import { AdminAttendanceTab } from '@/features/attendance';
+import { ManagerAttendanceTab } from '@/features/attendance';
 import { AdminInventoryTab } from '@/features/inventory';
 import { ManagerProductionTab } from '@/features/production';
 
@@ -80,7 +80,7 @@ export default function ManagerDashboard({ initialTab = 'overview' }: ManagerDas
             case 'tasks':
                 return <TasksTab />;
             case 'attendance':
-                return <AdminAttendanceTab />;
+                return <ManagerAttendanceTab />;
             case 'production':
                 return <ManagerProductionTab />;
             case 'inventory':

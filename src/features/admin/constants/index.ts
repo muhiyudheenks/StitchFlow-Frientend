@@ -28,7 +28,7 @@ export const navItems: NavItem[] = [
     { id: 'inventory', label: 'Inventory', icon: FiBox },
     { id: 'attendance', label: 'Attendance', icon: FiCalendar },
     { id: 'support', label: 'Support Tickets', icon: FiHelpCircle },
-    { id: 'analytics', label: 'Analytics', icon: FiBarChart2 },
-    { id: 'reports', label: 'Reports', icon: FiFileText },
+    // { id: 'analytics', label: 'Analytics', icon: FiBarChart2 },
+    // { id: 'reports', label: 'Reports', icon: FiFileText },
     { id: 'settings', label: 'Settings', icon: FiSettings },
 ];
