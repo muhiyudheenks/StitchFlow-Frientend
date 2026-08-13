@@ -78,8 +78,15 @@ export default function ProductionTab() {
         },
     });
 
+    const [viewFilter, setViewFilter] = useState<'active' | 'completed'>('active');
+
     // Keep selectedBatch synced with query data
     const activeBatch = batches.find((b: any) => (b.id || b._id) === (selectedBatch?.id || selectedBatch?._id)) || selectedBatch;
+
+    const displayedBatches = batches.filter((b: any) => {
+        const s = (b.status || '').toLowerCase();
+        return viewFilter === 'active' ? (s.includes('pending') || s.includes('active')) : s.includes('completed');
+    });
 
     // 2. Fetch Available Employees for all 3 worker types to evaluate availability & populate dropdowns
     const { data: availableCutting = [], isLoading: loadingCutting } = useQuery<any[]>({
@@ -110,8 +117,8 @@ export default function ProductionTab() {
     const activeAvailableList = activeAddWorkerType === 'Cutting'
         ? availableCutting
         : activeAddWorkerType === 'Finishing'
-        ? availableFinishing
-        : availableStitching;
+            ? availableFinishing
+            : availableStitching;
 
     // Current batch member ID set to prevent duplicates
     const currentMemberIds = new Set((activeBatch?.members || []).map((m: any) => (m.id || m._id || m.toString())));
@@ -282,8 +289,8 @@ export default function ProductionTab() {
     const taskEligibleMembers = taskWorkerType === 'Cutting'
         ? cuttingWorkersList
         : taskWorkerType === 'Finishing'
-        ? finishingWorkersList
-        : stitchingWorkersList;
+            ? finishingWorkersList
+            : stitchingWorkersList;
 
     const allTasksCompleted = batchTasks.length > 0 && batchTasks.every((t: any) => t.status === 'Completed' || t.status === 'Verified');
 
@@ -308,6 +315,21 @@ export default function ProductionTab() {
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         Monitor assigned batch information, allocate worker categories, dispatch tasks, and review completion.
                     </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="inline-flex rounded-2xl bg-slate-50 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-800">
+                        <button
+                            onClick={() => setViewFilter('active')}
+                            className={`px-3 py-2 rounded-xl text-xs font-extrabold ${viewFilter === 'active' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                            Active Batches
+                        </button>
+                        <button
+                            onClick={() => setViewFilter('completed')}
+                            className={`px-3 py-2 rounded-xl text-xs font-extrabold ${viewFilter === 'completed' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                            Completed / History
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -368,11 +390,10 @@ export default function ProductionTab() {
                                             </h3>
                                         </div>
                                         <span
-                                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${
-                                                b.status === 'COMPLETED' || b.status === 'Completed'
+                                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${b.status === 'COMPLETED' || b.status === 'Completed'
                                                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200'
                                                     : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200'
-                                            }`}
+                                                }`}
                                         >
                                             {b.status || 'Active'}
                                         </span>
@@ -472,11 +493,10 @@ export default function ProductionTab() {
                                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 uppercase">
                                         Batch Details Page
                                     </span>
-                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                                        activeBatch.status === 'Completed' || activeBatch.status === 'COMPLETED'
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${activeBatch.status === 'Completed' || activeBatch.status === 'COMPLETED'
                                             ? 'bg-emerald-100 text-emerald-700'
                                             : 'bg-indigo-100 text-indigo-700'
-                                    }`}>
+                                        }`}>
                                         {activeBatch.status || 'Active'}
                                     </span>
                                 </div>
@@ -679,13 +699,12 @@ export default function ProductionTab() {
                                                         {t.completedQuantity || 0} / {t.targetQuantity || 100} pcs
                                                     </td>
                                                     <td className="py-3 px-4">
-                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                                                            t.status === 'Completed' || t.status === 'Verified'
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${t.status === 'Completed' || t.status === 'Verified'
                                                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                                 : t.status === 'Under Review'
-                                                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                                                : 'bg-slate-100 text-slate-600'
-                                                        }`}>
+                                                                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                                                    : 'bg-slate-100 text-slate-600'
+                                                            }`}>
                                                             {t.status}
                                                         </span>
                                                     </td>
@@ -801,16 +820,14 @@ export default function ProductionTab() {
                                         <div
                                             key={empId}
                                             onClick={() => handleToggleEmployeeSelect(empId)}
-                                            className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                                                isSelected
+                                            className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${isSelected
                                                     ? 'bg-purple-50 dark:bg-purple-950/60 border-purple-300 dark:border-purple-800 shadow-2xs'
                                                     : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className={`h-5 w-5 rounded-md flex items-center justify-center border transition-colors ${
-                                                    isSelected ? 'bg-purple-600 border-purple-600 text-white' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800'
-                                                }`}>
+                                                <div className={`h-5 w-5 rounded-md flex items-center justify-center border transition-colors ${isSelected ? 'bg-purple-600 border-purple-600 text-white' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800'
+                                                    }`}>
                                                     {isSelected && <FiCheck size={12} />}
                                                 </div>
 

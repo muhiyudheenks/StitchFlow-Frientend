@@ -47,6 +47,7 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
 
     // Selected Batch for Task Assignment Section
     const [selectedBatch, setSelectedBatch] = useState<ProductionBatchData | null>(null);
+    const [viewFilter, setViewFilter] = useState<'active' | 'completed'>('active');
     const currentSelectedBatch = selectedBatch
         ? batches.find((b: any) => (b._id || b.id) === (selectedBatch._id || selectedBatch.id)) || selectedBatch
         : null;
@@ -223,14 +224,20 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                     <p className="font-bold">Failed to load production batches</p>
                     <p className="text-xs">{(batchesError as any)?.response?.data?.message || (batchesError as any)?.message || 'An error occurred'}</p>
                 </div>
-            ) : batches.length === 0 ? (
+            ) : batches.filter((b: any) => {
+                const s = (b.status || '').toLowerCase();
+                return viewFilter === 'active' ? (s.includes('pending') || s.includes('active')) : s.includes('completed');
+            }).length === 0 ? (
                 <div className="p-12 text-center text-slate-400 font-semibold bg-white/80 dark:bg-slate-900/80 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
-                    <p className="text-base font-bold text-slate-700 dark:text-slate-300">No production batches provisioned yet.</p>
-                    <p className="text-xs text-slate-400">Click &quot;Create Production Batch&quot; above to setup your first team container.</p>
+                    <p className="text-base font-bold text-slate-700 dark:text-slate-300">No production batches matching the selected view.</p>
+                    <p className="text-xs text-slate-400">Toggle between Active and Completed to view batches.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {batches.map((batch: ProductionBatchData, idx: number) => {
+                    {batches.filter((b: any) => {
+                        const s = (b.status || '').toLowerCase();
+                        return viewFilter === 'active' ? (s.includes('pending') || s.includes('active')) : s.includes('completed');
+                    }).map((batch: ProductionBatchData, idx: number) => {
                         const batchName = batch.batchName || `Batch ${idx + 1}`;
                         const managerName = batch.managerName || (batch.manager as any)?.fullName || 'Unassigned';
                         const isSelected = (selectedBatch?._id || selectedBatch?.id) === (batch._id || batch.id);
@@ -242,8 +249,8 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.4, delay: idx * 0.08 }}
                                 className={`rounded-3xl border p-6 shadow-xs transition-all flex flex-col justify-between cursor-pointer ${isSelected
-                                        ? 'bg-purple-50/80 dark:bg-purple-950/40 border-purple-500 shadow-lg'
-                                        : 'bg-white/90 dark:bg-slate-900/90 border-slate-200/80 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700'
+                                    ? 'bg-purple-50/80 dark:bg-purple-950/40 border-purple-500 shadow-lg'
+                                    : 'bg-white/90 dark:bg-slate-900/90 border-slate-200/80 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700'
                                     }`}
                                 onClick={() => setSelectedBatch(batch)}
                             >
@@ -426,7 +433,7 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                                                     </td>
                                                     <td className="py-4 px-6">
                                                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${task.taskType === 'Finishing' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 border-indigo-200' :
-                                                                'bg-purple-50 dark:bg-purple-950/50 text-purple-600 border-purple-200'
+                                                            'bg-purple-50 dark:bg-purple-950/50 text-purple-600 border-purple-200'
                                                             }`}>
                                                             {task.taskType || 'Stitching'}
                                                         </span>
@@ -442,17 +449,17 @@ export default function ProductionTab({ onOpenQuickAction }: ProductionTabProps)
                                                     </td>
                                                     <td className="py-4 px-6">
                                                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${task.priority === 'Urgent' ? 'text-rose-600 font-extrabold' :
-                                                                task.priority === 'High' ? 'text-amber-600' : 'text-slate-600'
+                                                            task.priority === 'High' ? 'text-amber-600' : 'text-slate-600'
                                                             }`}>
                                                             {task.priority}
                                                         </span>
                                                     </td>
                                                     <td className="py-4 px-6">
                                                         <span className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${task.status === 'Completed' || task.status === 'Verified'
-                                                                ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 border-emerald-200'
-                                                                : task.status === 'In Progress'
-                                                                    ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 border-indigo-200'
-                                                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 border-slate-200'
+                                                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 border-emerald-200'
+                                                            : task.status === 'In Progress'
+                                                                ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 border-indigo-200'
+                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 border-slate-200'
                                                             }`}>
                                                             {task.status === 'Verified' || task.status === 'Completed' ? '✓ Verified / Approved' : task.status}
                                                         </span>

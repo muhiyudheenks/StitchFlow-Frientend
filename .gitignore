@@ -8,6 +8,7 @@ build/
 
 # environment
 .env*
+.env.example
 
 # debug & logs
 npm-debug.log*
