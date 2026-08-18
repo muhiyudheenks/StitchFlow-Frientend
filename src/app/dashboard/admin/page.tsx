@@ -1,4 +1,4 @@
-import { AdminDashboard } from "@/features/admin";
+import { AdminDashboard } from "@/modules/admin";
 
 export default function AdminPage() {
     return <AdminDashboard initialTab="dashboard" />;

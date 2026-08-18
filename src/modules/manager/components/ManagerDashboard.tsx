@@ -13,9 +13,9 @@ import { ManagerTab } from '../types';
 import { FiX, FiCheckSquare } from 'react-icons/fi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/config';
-import { ManagerAttendanceTab } from '@/features/attendance';
-import { AdminInventoryTab } from '@/features/inventory';
-import { ManagerProductionTab } from '@/features/production';
+import { ManagerAttendanceTab } from '@/modules/attendance';
+import { AdminInventoryTab } from '@/modules/inventory';
+import { ManagerProductionTab } from '@/modules/production';
 
 interface ManagerDashboardProps {
     initialTab?: ManagerTab;

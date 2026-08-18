@@ -1,5 +1,5 @@
-import { AdminDashboard } from "@/features/admin";
-import { AdminTab } from "@/features/admin/types";
+import { AdminDashboard } from "@/modules/admin";
+import { AdminTab } from "@/modules/admin/types";
 
 interface PageProps {
     params: Promise<{ tab: string }>;

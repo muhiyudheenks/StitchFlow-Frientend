@@ -1,4 +1,4 @@
-import { LoginPage } from "@/features/auth";
+import { LoginPage } from "@/modules/auth";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

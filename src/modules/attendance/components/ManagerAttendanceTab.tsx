@@ -12,7 +12,7 @@ import {
     FiChevronDown,
     FiChevronUp
 } from 'react-icons/fi';
-import { ManagerAttendanceRecord, ManagerLeaveRequest } from '@/features/manager/types';
+import { ManagerAttendanceRecord, ManagerLeaveRequest } from '@/modules/manager/types';
 
 const formatTime = (val?: string | Date | null): string => {
     if (!val || val === '-' || val === '—') return '-';

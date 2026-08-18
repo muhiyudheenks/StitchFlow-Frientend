@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ForgotPasswordPage } from '@/features/auth';
+import { ForgotPasswordPage } from '@/modules/auth';
 
 export const metadata: Metadata = {
     title: 'Forgot Password — StitchFlow',

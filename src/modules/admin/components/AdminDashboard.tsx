@@ -14,9 +14,9 @@ import SettingsTab from './SettingsTab';
 import QuickActionModal from './QuickActionModal';
 import { AdminTab } from '../types';
 import { useOverviewCards } from '../hooks/useOverviewCards';
-import { AdminProductionTab as ProductionTab } from '@/features/production';
-import { AdminInventoryTab } from '@/features/inventory';
-import { AdminAttendanceTab } from '@/features/attendance';
+import { AdminProductionTab as ProductionTab } from '@/modules/production';
+import { AdminInventoryTab } from '@/modules/inventory';
+import { AdminAttendanceTab } from '@/modules/attendance';
 
 interface AdminDashboardProps {
     initialTab?: AdminTab;

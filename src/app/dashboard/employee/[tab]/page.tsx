@@ -1,5 +1,5 @@
-import { EmployeeDashboard } from '@/features/employee';
-import { EmployeeTab } from '@/features/employee/types';
+import { EmployeeDashboard } from '@/modules/employee';
+import { EmployeeTab } from '@/modules/employee/types';
 
 interface EmployeeTabPageProps {
     params: Promise<{ tab: string }>;

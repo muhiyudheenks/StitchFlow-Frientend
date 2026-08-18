@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/config';
 import { useProductionBatches, useProductionMutations } from '../hooks/useProduction';
-import { useManagers } from '@/features/admin/hooks/useManagers';
+import { useManagers } from '@/modules/admin/hooks/useManagers';
 import { ProductionBatchData, BatchTaskData, CreateBatchPayload } from '../services/production-service';
 import {
     FiCpu,

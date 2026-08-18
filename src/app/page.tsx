@@ -1,1 +1,1 @@
-export { default } from '@/features/landing';
+export { default } from '@/modules/landing';

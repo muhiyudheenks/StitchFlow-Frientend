@@ -1,1 +1,1 @@
-export * from '@/features/auth/validations/authSchema';
+export * from '@/modules/auth/validations/authSchema';

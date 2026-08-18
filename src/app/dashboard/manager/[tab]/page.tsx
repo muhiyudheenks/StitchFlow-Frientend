@@ -1,5 +1,5 @@
-import { ManagerDashboard } from '@/features/manager';
-import { ManagerTab } from '@/features/manager/types';
+import { ManagerDashboard } from '@/modules/manager';
+import { ManagerTab } from '@/modules/manager/types';
 
 interface ManagerTabPageProps {
     params: Promise<{ tab: string }>;

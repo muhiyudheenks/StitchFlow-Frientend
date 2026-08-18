@@ -1,1 +1,1 @@
-export * from '@/features/auth/hooks/auth-hooks';
+export * from '@/modules/auth/hooks/auth-hooks';

@@ -1,1 +1,1 @@
-export * from '@/features/auth/types/auth';
+export * from '@/modules/auth/types/auth';

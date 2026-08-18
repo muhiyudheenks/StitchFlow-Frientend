@@ -10,8 +10,8 @@ import TasksTab from './TasksTab';
 import NotificationsTab from './NotificationsTab';
 import SupportTab from './SupportTab';
 import { EmployeeTab } from '../types';
-import { EmployeeAttendanceTab } from '@/features/attendance';
-import { EmployeeProductionTab } from '@/features/production';
+import { EmployeeAttendanceTab } from '@/modules/attendance';
+import { EmployeeProductionTab } from '@/modules/production';
 
 // ProfileSubTab: which section inside the Profile page to show
 export type ProfileSubTab = 'overview' | 'performance' | 'salary';

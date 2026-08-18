@@ -25,9 +25,9 @@ import {
     FiTrash2,
 } from 'react-icons/fi';
 
-import Sidebar from '@/features/manager/components/Sidebar';
-import Header from '@/features/manager/components/Header';
-import { ManagerTab } from '@/features/manager/types';
+import Sidebar from '@/modules/manager/components/Sidebar';
+import Header from '@/modules/manager/components/Header';
+import { ManagerTab } from '@/modules/manager/types';
 
 interface PageProps {
     params: Promise<{ batchId: string }>;
