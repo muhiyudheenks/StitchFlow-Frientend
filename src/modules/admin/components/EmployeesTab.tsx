@@ -233,13 +233,20 @@ export default function EmployeesTab({ onOpenQuickAction }: EmployeesTabProps) {
         setResendErrorMsg(null);
         try {
             const { data } = await api.post(`/api/admin/employees/${employeeId}/resend-setup-link`);
-            setResendSuccessMsg(data.message || 'New setup password link sent successfully.');
-            setTimeout(() => setResendSuccessMsg(null), 5000);
+            if (data?.emailSent === false) {
+                const errMsg = data?.error || data?.message || 'Email delivery failed';
+                setResendErrorMsg(`Setup link was regenerated but email failed to send: ${errMsg}`);
+                setTimeout(() => setResendErrorMsg(null), 8000);
+            } else {
+                setResendSuccessMsg(data.message || 'New setup password link sent successfully.');
+                setTimeout(() => setResendSuccessMsg(null), 5000);
+            }
         } catch (err: any) {
             setResendErrorMsg(err.response?.data?.message || 'Failed to resend setup password link.');
             setTimeout(() => setResendErrorMsg(null), 5000);
         } finally {
             setResendingId(null);
+            queryClient.invalidateQueries({ queryKey: ['admin-employees'] });
         }
     };
 
@@ -472,7 +479,8 @@ export default function EmployeesTab({ onOpenQuickAction }: EmployeesTabProps) {
                                                     >
                                                         <FiTrash2 size={14} />
                                                     </button>
-                                                    {!emp.isVerified && (
+                                                    {/* Show Resend Link for: unverified employees OR stuck employees (verified but never set password) */}
+                                                    {(!emp.isVerified || (emp.isVerified && !emp.setupPasswordExpire)) && (
                                                         <button
                                                             onClick={() => handleResendSetupLink(emp.id)}
                                                             disabled={resendingId === emp.id}

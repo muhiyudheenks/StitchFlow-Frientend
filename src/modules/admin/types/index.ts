@@ -44,6 +44,7 @@ export interface Employee {
     attendanceRate?: number;
     isVerified?: boolean;
     isBlock?: boolean;
+    setupPasswordExpire?: string | null;
     createdAt?: string;
 }
 
