@@ -110,12 +110,18 @@ export default function EmployeesTab({ onOpenQuickAction }: EmployeesTabProps) {
             const res = await api.post('/api/admin/employees', payload);
             return res.data;
         },
-        onSuccess: () => {
+        onSuccess: (data: any) => {
             queryClient.invalidateQueries({ queryKey: ['admin-employees'] });
             setIsAddModalOpen(false);
             resetForm();
-            setResendSuccessMsg('New employee created and invitation link sent successfully!');
-            setTimeout(() => setResendSuccessMsg(null), 4000);
+            if (data?.emailSent === false) {
+                const errMsg = data?.emailError ? `: ${data.emailError}` : '';
+                setResendErrorMsg(`New employee created, but invitation email failed to send${errMsg}. Please use the "Resend Link" button to try again.`);
+                setTimeout(() => setResendErrorMsg(null), 8000);
+            } else {
+                setResendSuccessMsg('New employee created and invitation link sent successfully!');
+                setTimeout(() => setResendSuccessMsg(null), 4000);
+            }
         },
         onError: (err: any) => {
             setFormError(err.response?.data?.message || err.message || 'Failed to create employee');
